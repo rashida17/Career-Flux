@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react';
 
 import Header from '../components/Header';
-import Hero from '../components/Hero1';
-import FeaturedJobs from '../components/FeaturedJobs1';
+import Hero from '../components/Hero';
+import FeaturedJobs from '../components/FeaturedJobs';
 import About from '../components/About';
 import Footer from '../components/Footer';
 import RoleSelectModal from '../components/RoleSelectModal'; // NEW
