@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from "react";
 import {
   Search,
   Layers,
@@ -21,27 +21,28 @@ import {
   ListChecks,
   FileText,
   ShieldCheck,
-} from 'lucide-react';
+} from "lucide-react";
 
-import Header from '../components/Header';
-import FeaturedJobs from '../components/FeaturedJobs';
-import Footer from '../components/Footer';
-import RoleSelectModal from '../components/RoleSelectModal';
-import Dropdown from '../components/Dropdown'; // Fixed import path
-import { categories } from '../data/jobs';
+import Header from "../components/Header";
+import FeaturedJobs from "../components/FeaturedJobs";
+import Footer from "../components/Footer";
+import RoleSelectModal from "../components/RoleSelectModal";
+import Dropdown from "../components/Dropdown"; // Fixed import path
+import { categories } from "../data/jobs";
+import { useNavigate } from "react-router-dom";
 
 // ==========================================
 // HERO SECTION COMPONENT (Integrated directly)
 // ==========================================
-const popularSearches = ['Frontend', 'Data Analyst', 'Remote', 'Internship'];
+const popularSearches = ["Frontend", "Data Analyst", "Remote", "Internship"];
 
 const fieldClass =
-  'flex min-h-[50px] items-center gap-3 rounded-xl border border-transparent bg-stone-50 px-3.5 transition focus-within:border-brand-300 focus-within:bg-white sm:rounded-2xl';
+  "flex min-h-[50px] items-center gap-3 rounded-xl border border-transparent bg-stone-50 px-3.5 transition focus-within:border-brand-300 focus-within:bg-white sm:rounded-2xl";
 
 function Hero({ onSearch }) {
-  const [query, setQuery] = useState('');
-  const [location, setLocation] = useState('');
-  const [category, setCategory] = useState('');
+  const [query, setQuery] = useState("");
+  const [location, setLocation] = useState("");
+  const [category, setCategory] = useState("");
   const [imageFailed, setImageFailed] = useState(false);
 
   const handleSubmit = (e) => {
@@ -51,15 +52,21 @@ function Hero({ onSearch }) {
 
   const handlePopular = (term) => {
     setQuery(term);
-    setLocation('');
-    setCategory('');
-    onSearch({ query: term, category: '', location: '' });
+    setLocation("");
+    setCategory("");
+    onSearch({ query: term, category: "", location: "" });
   };
 
-  const categoryOptions = [{ value: '', label: 'All categories' }, ...categories];
+  const categoryOptions = [
+    { value: "", label: "All categories" },
+    ...categories,
+  ];
 
   return (
-    <section id="home" className="hero-bg relative overflow-x-clip border-b border-stone-100">
+    <section
+      id="home"
+      className="hero-bg relative overflow-x-clip border-b border-stone-100"
+    >
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 py-14 sm:px-6 sm:py-16 lg:grid-cols-2 lg:gap-14 lg:px-8 lg:py-20">
         {/* LEFT */}
         <div className="relative z-10 text-center lg:text-left">
@@ -78,7 +85,8 @@ function Hero({ onSearch }) {
           </h1>
 
           <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-stone-600 sm:text-lg sm:leading-8 lg:mx-0">
-            Discover jobs that match your skills and candidates who match your needs.
+            Discover jobs that match your skills and candidates who match your
+            needs.
           </p>
 
           <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-stone-200 bg-white p-2 shadow-soft sm:rounded-3xl lg:mx-0">
@@ -139,7 +147,9 @@ function Hero({ onSearch }) {
           </div>
 
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
-            <span className="text-xs font-semibold text-stone-500">Popular:</span>
+            <span className="text-xs font-semibold text-stone-500">
+              Popular:
+            </span>
             {popularSearches.map((term) => (
               <button
                 key={term}
@@ -153,7 +163,9 @@ function Hero({ onSearch }) {
           </div>
 
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-            <span className="text-sm font-semibold text-stone-600">Looking to hire?</span>
+            <span className="text-sm font-semibold text-stone-600">
+              Looking to hire?
+            </span>
             <a
               href="#contact"
               className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-bold text-brand-700 transition hover:bg-brand-100 sm:text-sm"
@@ -182,7 +194,8 @@ function Hero({ onSearch }) {
                     <BriefcaseBusiness className="h-12 w-12" />
                   </span>
                   <p className="max-w-xs text-sm font-semibold leading-6 text-stone-600">
-                    Image not found. Check the file name inside the <strong>public</strong> folder.
+                    Image not found. Check the file name inside the{" "}
+                    <strong>public</strong> folder.
                   </p>
                 </div>
               )}
@@ -215,7 +228,9 @@ function Hero({ onSearch }) {
             </span>
             <div className="flex flex-col justify-center leading-tight">
               <strong className="text-xs text-slate-900">Explore Jobs</strong>
-              <span className="mt-0.5 text-[11px] text-stone-500">Find your next move</span>
+              <span className="mt-0.5 text-[11px] text-stone-500">
+                Find your next move
+              </span>
             </div>
           </div>
 
@@ -225,8 +240,12 @@ function Hero({ onSearch }) {
               <TrendingUp className="h-5 w-5" />
             </span>
             <div className="flex flex-col justify-center leading-tight">
-              <strong className="text-xs text-slate-900">Build Your Career</strong>
-              <span className="mt-0.5 text-[11px] text-stone-500">Grow with every step</span>
+              <strong className="text-xs text-slate-900">
+                Build Your Career
+              </strong>
+              <span className="mt-0.5 text-[11px] text-stone-500">
+                Grow with every step
+              </span>
             </div>
           </div>
         </div>
@@ -240,29 +259,77 @@ function Hero({ onSearch }) {
 // ==========================================
 const audiences = [
   {
-    key: 'seekers',
-    label: 'Job Seekers',
-    cta: 'Create your profile',
+    key: "seekers",
+    label: "Job Seekers",
+    cta: "Create your profile",
     features: [
-      { icon: Search, title: 'Find relevant jobs and internships', text: 'Search by skills, location and category.' },
-      { icon: Sparkles, title: 'Improve skills with AI guidance', text: 'See which skills to build for the roles you want.' },
-      { icon: Target, title: 'Personalized job recommendations', text: 'Get roles that fit your profile.' },
-      { icon: ClipboardList, title: 'Apply and track progress', text: 'Follow every application from sent to decision.' },
-      { icon: User, title: 'Build a professional profile', text: 'Keep your skills, experience and CV in one place.' },
-      { icon: Flag, title: 'Report suspicious activity', text: 'Flag fake or misleading postings.' },
+      {
+        icon: Search,
+        title: "Find relevant jobs and internships",
+        text: "Search by skills, location and category.",
+      },
+      {
+        icon: Sparkles,
+        title: "Improve skills with AI guidance",
+        text: "See which skills to build for the roles you want.",
+      },
+      {
+        icon: Target,
+        title: "Personalized job recommendations",
+        text: "Get roles that fit your profile.",
+      },
+      {
+        icon: ClipboardList,
+        title: "Apply and track progress",
+        text: "Follow every application from sent to decision.",
+      },
+      {
+        icon: User,
+        title: "Build a professional profile",
+        text: "Keep your skills, experience and CV in one place.",
+      },
+      {
+        icon: Flag,
+        title: "Report suspicious activity",
+        text: "Flag fake or misleading postings.",
+      },
     ],
   },
   {
-    key: 'providers',
-    label: 'Job Providers',
-    cta: 'Post a job',
+    key: "providers",
+    label: "Job Providers",
+    cta: "Post a job",
     features: [
-      { icon: FilePlus, title: 'Publish jobs and internships', text: 'Post opportunities in a few simple steps.' },
-      { icon: Lightbulb, title: 'AI skill suggestions for postings', text: 'Describe the role better and attract the right people.' },
-      { icon: Users, title: 'Discover suitable candidates', text: 'Find people whose skills match your needs.' },
-      { icon: ListChecks, title: 'Manage applicants and statuses', text: 'Review applications and update their status.' },
-      { icon: FileText, title: 'Review profiles and CVs', text: 'See each candidate in full before you decide.' },
-      { icon: Flag, title: 'Report suspicious activity', text: 'Flag suspicious profiles or applications.' },
+      {
+        icon: FilePlus,
+        title: "Publish jobs and internships",
+        text: "Post opportunities in a few simple steps.",
+      },
+      {
+        icon: Lightbulb,
+        title: "AI skill suggestions for postings",
+        text: "Describe the role better and attract the right people.",
+      },
+      {
+        icon: Users,
+        title: "Discover suitable candidates",
+        text: "Find people whose skills match your needs.",
+      },
+      {
+        icon: ListChecks,
+        title: "Manage applicants and statuses",
+        text: "Review applications and update their status.",
+      },
+      {
+        icon: FileText,
+        title: "Review profiles and CVs",
+        text: "See each candidate in full before you decide.",
+      },
+      {
+        icon: Flag,
+        title: "Report suspicious activity",
+        text: "Flag suspicious profiles or applications.",
+      },
     ],
   },
 ];
@@ -270,25 +337,29 @@ const audiences = [
 const sharedPoints = [
   {
     icon: Sparkles,
-    title: 'AI-assisted guidance',
-    text: 'Skill suggestions for candidates and for job postings.',
+    title: "AI-assisted guidance",
+    text: "Skill suggestions for candidates and for job postings.",
   },
   {
     icon: ShieldCheck,
-    title: 'Safer hiring',
-    text: 'Both sides can report suspicious activity.',
+    title: "Safer hiring",
+    text: "Both sides can report suspicious activity.",
   },
 ];
 
 const tabBase =
-  'flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500';
+  "flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500";
 
 function About() {
-  const [active, setActive] = useState('seekers');
+  const [active, setActive] = useState("seekers");
   const current = audiences.find((a) => a.key === active);
 
   return (
-    <section id="about" aria-labelledby="about-heading" className="bg-white py-16 sm:py-20">
+    <section
+      id="about"
+      aria-labelledby="about-heading"
+      className="bg-white py-16 sm:py-20"
+    >
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
         {/* Left: heading, paragraph and shared strengths */}
         <div className="space-y-6">
@@ -304,18 +375,24 @@ function About() {
           </h2>
 
           <p className="text-sm leading-7 text-stone-600 sm:text-base">
-            CareerFlux connects job seekers with relevant jobs and internships, and helps employers
-            publish roles and find suitable candidates. AI-based skill suggestions guide both sides,
-            so every match starts from skills, not guesswork.
+            CareerFlux connects job seekers with relevant jobs and internships,
+            and helps employers publish roles and find suitable candidates.
+            AI-based skill suggestions guide both sides, so every match starts
+            from skills, not guesswork.
           </p>
 
           <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
             {sharedPoints.map(({ icon: Icon, title, text }) => (
-              <div key={title} className="rounded-2xl border border-stone-100 bg-cream p-5">
+              <div
+                key={title}
+                className="rounded-2xl border border-stone-100 bg-cream p-5"
+              >
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
-                <h3 className="mt-3 text-sm font-extrabold text-slate-900">{title}</h3>
+                <h3 className="mt-3 text-sm font-extrabold text-slate-900">
+                  {title}
+                </h3>
                 <p className="mt-1 text-xs leading-5 text-stone-600">{text}</p>
               </div>
             ))}
@@ -342,8 +419,8 @@ function About() {
                 onClick={() => setActive(key)}
                 className={`${tabBase} ${
                   active === key
-                    ? 'bg-brand-500 text-white shadow-sm'
-                    : 'text-stone-600 hover:bg-stone-100 hover:text-slate-900'
+                    ? "bg-brand-500 text-white shadow-sm"
+                    : "text-stone-600 hover:bg-stone-100 hover:text-slate-900"
                 }`}
               >
                 {label}
@@ -359,8 +436,12 @@ function About() {
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div>
-                  <h4 className="text-sm font-extrabold text-slate-900">{title}</h4>
-                  <p className="mt-0.5 text-[13px] leading-5 text-stone-600">{text}</p>
+                  <h4 className="text-sm font-extrabold text-slate-900">
+                    {title}
+                  </h4>
+                  <p className="mt-0.5 text-[13px] leading-5 text-stone-600">
+                    {text}
+                  </p>
                 </div>
               </li>
             ))}
@@ -382,43 +463,45 @@ function About() {
 // ==========================================
 // HOME PAGE COMPONENT
 // ==========================================
-const emptySearch = { query: '', category: '', location: '' };
+const emptySearch = { query: "", category: "", location: "" };
 
 export default function Home() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState(emptySearch);
   const [roleModalOpen, setRoleModalOpen] = useState(false); // NEW
 
   const handleSearch = (values) => {
     setSearch(values);
-    document.getElementById('jobs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document
+      .getElementById("jobs")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const handleClear = () => setSearch(emptySearch);
 
   // Header buttons call this. Register opens the role choice.
   const handleAuth = (type) => {
-    if (type === 'Register') {
+    if (type === "Register") {
       setRoleModalOpen(true); // NEW
       return;
     }
     // Sign In belongs to your teammate (Nabi). Connect their page here.
-    alert('Sign In: connect this to the Sign In page.');
+    alert("Sign In: connect this to the Sign In page.");
   };
 
   const closeRoleModal = useCallback(() => setRoleModalOpen(false), []); // NEW
 
   // role is 'seeker' or 'provider'
   const handleRoleSelect = (role) => {
-    setRoleModalOpen(false); // NEW
-    // CONNECT HERE: send the user to your teammate's Sign Up page.
-    // With React Router: navigate(`/signup?role=${role}`)
-    alert(`Selected role: ${role}\n\nConnect this to the Sign Up page.`);
+    setRoleModalOpen(false);
+    const roleToType = { seeker: "jobseeker", provider: "employer" };
+    navigate(`/signup?type=${roleToType[role] || "jobseeker"}`);
   };
 
   const handleSignInFromModal = () => {
     setRoleModalOpen(false); // NEW
     // CONNECT HERE: send the user to the Sign In page.
-    alert('Connect this to the Sign In page.');
+    alert("Connect this to the Sign In page.");
   };
 
   return (
