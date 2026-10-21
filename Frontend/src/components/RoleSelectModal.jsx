@@ -1,22 +1,30 @@
-import { useEffect, useRef } from 'react';
-import { X, User, Briefcase, ChevronRight, UserPlus } from 'lucide-react';
-
+import { useEffect, useRef } from "react";
+import { X, User, Briefcase, ChevronRight, UserPlus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 const roles = [
   {
-    key: 'seeker',
-    title: 'Job Seeker',
-    text: 'Find jobs, get AI skill guidance and track your applications.',
+    key: "seeker",
+    title: "Job Seeker",
+    text: "Find jobs, get AI skill guidance and track your applications.",
     icon: User,
   },
   {
-    key: 'provider',
-    title: 'Job Provider',
-    text: 'Post jobs, review applicants and manage your hiring.',
+    key: "provider",
+    title: "Job Provider",
+    text: "Post jobs, review applicants and manage your hiring.",
     icon: Briefcase,
   },
 ];
 
 export default function RoleSelectModal({ onSelect, onSignIn, onClose }) {
+  const navigate = useNavigate();
+  // your modal keys -> the values the sign up page and database use
+  const roleToType = { seeker: "jobseeker", provider: "employer" };
+
+  const handleSelect = (key) => {
+    onClose(); // close the modal
+    navigate(`/signup?type=${roleToType[key]}`); // open the sign up page
+  };
   const dialogRef = useRef(null);
   const closeButtonRef = useRef(null);
   const onCloseRef = useRef(onClose);
@@ -30,18 +38,18 @@ export default function RoleSelectModal({ onSelect, onSignIn, onClose }) {
     const previouslyFocused = document.activeElement;
     const originalOverflow = document.body.style.overflow;
 
-    document.body.style.overflow = 'hidden'; // lock page scroll behind the window
+    document.body.style.overflow = "hidden"; // lock page scroll behind the window
     closeButtonRef.current?.focus();
 
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onCloseRef.current();
         return;
       }
 
       // Keep Tab focus inside the window
-      if (e.key !== 'Tab' || !dialogRef.current) return;
-      const focusable = dialogRef.current.querySelectorAll('button');
+      if (e.key !== "Tab" || !dialogRef.current) return;
+      const focusable = dialogRef.current.querySelectorAll("button");
       if (focusable.length === 0) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
@@ -55,10 +63,10 @@ export default function RoleSelectModal({ onSelect, onSignIn, onClose }) {
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = originalOverflow;
       previouslyFocused?.focus?.(); // return focus to the Register button
     };
@@ -67,7 +75,11 @@ export default function RoleSelectModal({ onSelect, onSignIn, onClose }) {
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-4">
       {/* Backdrop: click to close */}
-      <div className="absolute inset-0 bg-slate-900/60" onClick={onClose} aria-hidden="true" />
+      <div
+        className="absolute inset-0 bg-slate-900/60"
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       {/* Window: a bottom sheet on phones, a centered card on larger screens */}
       <div
@@ -102,7 +114,9 @@ export default function RoleSelectModal({ onSelect, onSignIn, onClose }) {
           >
             Welcome to Career<span className="text-brand-500">Flux</span>
           </h2>
-          <p className="mt-2 text-sm text-stone-600">Select your role to create your account.</p>
+          <p className="mt-2 text-sm text-stone-600">
+            Select your role to create your account.
+          </p>
         </div>
 
         {/* Role choices: neutral cards, terracotta only on the arrow when hovered */}
@@ -119,8 +133,12 @@ export default function RoleSelectModal({ onSelect, onSignIn, onClose }) {
                 </span>
 
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-bold text-slate-900">{title}</span>
-                  <span className="mt-0.5 block text-[13px] leading-5 text-stone-600">{text}</span>
+                  <span className="block text-sm font-bold text-slate-900">
+                    {title}
+                  </span>
+                  <span className="mt-0.5 block text-[13px] leading-5 text-stone-600">
+                    {text}
+                  </span>
                 </span>
 
                 <ChevronRight
@@ -134,7 +152,7 @@ export default function RoleSelectModal({ onSelect, onSignIn, onClose }) {
 
         {/* Existing users */}
         <p className="mt-6 text-center text-sm text-stone-600">
-          Already have an account?{' '}
+          Already have an account?{" "}
           <button
             type="button"
             onClick={onSignIn}
