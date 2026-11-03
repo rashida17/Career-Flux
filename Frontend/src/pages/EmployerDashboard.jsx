@@ -1,9 +1,9 @@
 import { useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import DashboardOverview from "../components/DashboardOverview";
-// import EmployerProfileForm from "./EmployerProfileForm"; 
-// import CompanyProfileForm from "./CompanyProfileForm";
-// import CompanyVerificationForm from "./CompanyVerificationForm";
+import EmployerProfileForm from "./EmployerProfileForm"; 
+import CompanyProfileForm from "./CompanyProfileForm";
+import CompanyVerificationForm from "./CompanyVerificationForm";
 import {
   ArrowUpRight,
   BriefcaseBusiness,
@@ -99,7 +99,7 @@ const navigationItems = [
 const employerStats = [
   { title: "Total Open Jobs", value: "5", note: "2 new this week", icon: BriefcaseBusiness },
   { title: "Total Applications", value: "124", note: "+18% vs last month", icon: Users },
-  { title: "Candidate Invites", value: "18", note: "12 accepted", icon: Send },
+  { title: "Total Candidate Invites", value: "18", note: "12 accepted", icon: Send },
   { title: "Total Posted Jobs", value: "12", note: "5 active · 7 closed", icon: FolderOpen },
 ];
  
@@ -522,25 +522,25 @@ export default function EmployerDashboard() {
       `${selectedApplicant.name}'s application status changed to ${newStatus}.`
     );
   };
-// const handleProfileSave = (profile) => {
-//   // call your backend API here
-//   setNotice("Your profile details were updated successfully.");
-// };
+const handleProfileSave = (profile) => {
+  // call your backend API here
+  setNotice("Your profile details were updated successfully.");
+};
 
-// const [verificationStatus, setVerificationStatus] = useState("none"); // "none" | "pending" | "verified"
-// const [companyWebsite, setCompanyWebsite] = useState("");
+const [verificationStatus, setVerificationStatus] = useState("none"); // "none" | "pending" | "verified"
+const [companyWebsite, setCompanyWebsite] = useState("");
 
-// const handleCompanySave = (company) => {
-//   setCompanyWebsite(company.website);
-//   // call your backend API here
-//   setNotice("Your company profile was saved successfully.");
-// };
+const handleCompanySave = (company) => {
+  setCompanyWebsite(company.website);
+  // call your backend API here
+  setNotice("Your company profile was saved successfully.");
+};
 
-// const handleVerificationSubmit = ({ website, document }) => {
-//   // send website + PDF to your backend here, using FormData
-//   setVerificationStatus("pending");
-//   setNotice("Verification request submitted. We will review it shortly.");
-// };
+const handleVerificationSubmit = ({ website, document }) => {
+  // send website + PDF to your backend here, using FormData
+  setVerificationStatus("pending");
+  setNotice("Verification request submitted. We will review it shortly.");
+};
 
   return (
     <DashboardLayout
@@ -579,7 +579,7 @@ export default function EmployerDashboard() {
           )}
  
       
-      {/* {activeTab === "Employer Profile" && (
+      {activeTab === "Employer Profile" && (
   <EmployerProfileForm
     initialValues={{
       fullName: "Ahmed",
@@ -605,7 +605,7 @@ export default function EmployerDashboard() {
     onSubmit={handleVerificationSubmit}
     onBack={() => setActiveTab("Company Profile")}
   />
-)} */}
+)}
 
 {activeTab === "Dashboard" && (
   <>
@@ -618,8 +618,7 @@ export default function EmployerDashboard() {
           description:
             "Verification is optional. Approved employers can display a verified badge to help build trust with job seekers.",
           buttonLabel: "View Verification",
-          onButtonClick: () =>
-            setNotice("Company verification page will be connected when it is implemented."),
+          onButtonClick: () =>  setActiveTab("Verification"),
         }}
         stats={employerStats}
       />
