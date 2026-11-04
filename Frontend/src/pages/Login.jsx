@@ -126,9 +126,11 @@ const update = (e) => {
 
 // Save the login state according to "Keep me signed in"
 const loggedInUser = JSON.stringify({
-  email: form.email,
-  role: role,
+  email: data.user.email,
+  role: data.user.role,
 });
+const tokenStorage = remember ? localStorage : sessionStorage;
+tokenStorage.setItem("careerFluxToken", data.token);
 
 if (remember) {
   localStorage.setItem("careerFluxUser", loggedInUser);
@@ -142,14 +144,22 @@ if (remember) {
 window.dispatchEvent(new Event("careerFluxAuthChange"));
 
 setSuccess(data.message || "Login successful!");
-
 setTimeout(() => {
-  navigate("/");
+  if (data.user.role === "employer") {
+    navigate("/employer");
+  } else if (data.user.role === "admin") {
+    navigate("/admin");
+  } else if (data.user.role === "jobseeker") {
+    navigate("/jobseeker");
+  }
 }, 1000);
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("Server is not working.");
-    } finally {
+
+    
+} catch (err) {
+  console.error("Login error:", err);
+  setError(err.message || "Server is not working.");
+}
+ finally {
       setLoading(false);
     }
   };
