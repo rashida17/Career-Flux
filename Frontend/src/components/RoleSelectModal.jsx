@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { X, User, Briefcase, ChevronRight, UserPlus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 const roles = [
   {
     key: "seeker",
@@ -17,14 +16,6 @@ const roles = [
 ];
 
 export default function RoleSelectModal({ onSelect, onSignIn, onClose }) {
-  const navigate = useNavigate();
-  // your modal keys -> the values the sign up page and database use
-  const roleToType = { seeker: "jobseeker", provider: "employer" };
-
-  const handleSelect = (key) => {
-    onClose(); // close the modal
-    navigate(`/signup?type=${roleToType[key]}`); // open the sign up page
-  };
   const dialogRef = useRef(null);
   const closeButtonRef = useRef(null);
   const onCloseRef = useRef(onClose);

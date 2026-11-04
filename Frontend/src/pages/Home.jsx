@@ -485,8 +485,7 @@ export default function Home() {
       setRoleModalOpen(true); // NEW
       return;
     }
-    // Sign In belongs to your teammate (Nabi). Connect their page here.
-    alert("Sign In: connect this to the Sign In page.");
+    navigate("/login");
   };
 
   const closeRoleModal = useCallback(() => setRoleModalOpen(false), []); // NEW
@@ -500,8 +499,7 @@ export default function Home() {
 
   const handleSignInFromModal = () => {
     setRoleModalOpen(false); // NEW
-    // CONNECT HERE: send the user to the Sign In page.
-    alert("Connect this to the Sign In page.");
+    navigate("/login");
   };
 
   return (

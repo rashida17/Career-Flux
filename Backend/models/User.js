@@ -4,20 +4,47 @@ import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true }, // unique = no two accounts share an email
-    password: { type: String, required: true, select: false },                           // stores the HASH; hidden from queries unless asked for
-    role: { type: String, enum: ["jobseeker", "employer"], required: true },             // same values the signup page sends
+    name: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
+    password: {
+      type: String,
+      required: true,
+      select: false,
+    },
+
+   role: {
+  type: String,
+  enum: ["jobseeker", "employer", "admin"],
+  required: true,
+},
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
-  { timestamps: true } // adds createdAt and updatedAt automatically
+  { timestamps: true }
 );
 
-// turns the plain password into a hash (only when the password was set or changed)
+// Password hashing
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 12);
 });
 
-// Used by login: compares the typed password with the stored hash
+// Password comparison
 userSchema.methods.comparePassword = function (plain) {
   return bcrypt.compare(plain, this.password);
 };

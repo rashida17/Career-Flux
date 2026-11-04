@@ -102,6 +102,11 @@ export async function login(req, res, next) {
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
+    if (!user.isActive) {
+  return res.status(403).json({
+    message: "Your account has been deactivated. Please contact admin.",
+  });
+}
  
     res.status(200).json({
       message: "Login successful",
