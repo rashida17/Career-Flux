@@ -123,7 +123,11 @@ export default function SignUp() {
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      navigate("/");
+      navigate(
+        data.user.role === "employer"
+          ? "/employerdashboard"
+          : "/jobseekerdashboard",
+      );
     } catch (err) {
       setError(
         err.message === "Failed to fetch"

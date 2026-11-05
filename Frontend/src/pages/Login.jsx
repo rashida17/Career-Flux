@@ -1,7 +1,7 @@
+
 import { useState } from "react";
 import AuthLayout, {
   Field,
-  
   FormError,
   SubmitButton,
   MailIcon,
@@ -67,7 +67,6 @@ export default function Login() {
   const [success, setSuccess] = useState("");
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
-  
 
   const params = new URLSearchParams(window.location.search);
   const type = params.get("type") || params.get("role");
@@ -87,13 +86,11 @@ export default function Login() {
     }
   };
 
-  
-const update = (e) => {
-  setForm({ ...form, [e.target.name]: e.target.value });
-  setError("");
-  setSuccess("");
-};
-
+  const update = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    setError("");
+    setSuccess("");
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -121,33 +118,47 @@ const update = (e) => {
         return;
       }
 
-   setError("");
+      setError("");
 
-// Save the login state according to "Keep me signed in"
-const loggedInUser = JSON.stringify({
-  email: form.email,
-  role: role,
-});
+      // Save login state according to "Keep me signed in"
+      const loggedInUser = JSON.stringify({
+        email: data.user.email,
+        role: data.user.role,
+      });
 
-if (remember) {
-  localStorage.setItem("careerFluxUser", loggedInUser);
-  sessionStorage.removeItem("careerFluxUser");
-} else {
-  sessionStorage.setItem("careerFluxUser", loggedInUser);
-  localStorage.removeItem("careerFluxUser");
-}
+      const tokenStorage = remember ? localStorage : sessionStorage;
 
-// Notify the shared navbar immediately
-window.dispatchEvent(new Event("careerFluxAuthChange"));
+      // Save authentication token
+      tokenStorage.setItem("careerFluxToken", data.token);
 
-setSuccess(data.message || "Login successful!");
+      if (remember) {
+        localStorage.setItem("careerFluxUser", loggedInUser);
+        sessionStorage.removeItem("careerFluxUser");
+      } else {
+        sessionStorage.setItem("careerFluxUser", loggedInUser);
+        localStorage.removeItem("careerFluxUser");
+      }
 
-setTimeout(() => {
-  navigate("/");
-}, 1000);
+      // Notify the shared navbar immediately
+      window.dispatchEvent(new Event("careerFluxAuthChange"));
+
+      setSuccess(data.message || "Login successful!");
+
+      setTimeout(() => {
+        if (data.user.role === "employer") {
+          navigate("/employerdashboard");
+        } else if (data.user.role === "admin") {
+          navigate("/admin");
+        } else if (data.user.role === "jobseeker") {
+          navigate("/jobseekerdashboard");
+        } else {
+          setError("Invalid user role.");
+        }
+      }, 1000);
+
     } catch (err) {
       console.error("Login error:", err);
-      setError("Server is not working.");
+      setError(err.message || "Server is not working.");
     } finally {
       setLoading(false);
     }
@@ -158,7 +169,6 @@ setTimeout(() => {
       title="Welcome back"
       role={role}
       onAuth={handleAuth}
-     
       showcase={LOGIN[role]}
       footer={
         <>
@@ -167,7 +177,7 @@ setTimeout(() => {
             to={`/signup?type=${
               role === "employer" ? "employer" : "jobseeker"
             }`}
-           className="font-bold text-[#C84B31]"
+            className="font-bold text-[#C84B31]"
           >
             Create account
           </Link>
@@ -208,17 +218,17 @@ setTimeout(() => {
           Keep me signed in
         </label>
 
-<SubmitButton>
-  {loading ? "Signing in..." : LOGIN[role].cta}
-</SubmitButton>
+        <SubmitButton>
+          {loading ? "Signing in..." : LOGIN[role].cta}
+        </SubmitButton>
 
-<FormError message={error} />
+        <FormError message={error} />
 
-{success && (
-  <p className="mb-2 text-[13px] font-semibold text-brand-700">
-    {success}
-  </p>
-)}
+        {success && (
+          <p className="mb-2 text-[13px] font-semibold text-brand-700">
+            {success}
+          </p>
+        )}
       </form>
     </AuthLayout>
   );
