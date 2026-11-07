@@ -5,6 +5,12 @@ import {
 import FormLayout from "../components/FormLayout";
 
 const fields = [
+  {
+    name: "logo", label: "Company Logo", type: "file", full: true,
+    render: ({ value, setValue, error }) => (
+      <LogoUpload logo={value} setLogo={setValue} error={error} />
+    ),
+  },
   { name: "companyName", label: "Company Name", icon: Building2, placeholder: "e.g. TechCorp Solutions Inc.", autoComplete: "organization" },
   {
     name: "establishedDate", label: "Date Established", type: "date", icon: CalendarDays,
@@ -38,10 +44,13 @@ const fields = [
     placeholder: "Tell candidates what your company does, your culture and what makes it a great place to work.",
     invalidMessage: "Please write at least 30 characters about your company.",
   },
+  {
+    name: "coverImage", label: "Company Cover Image", type: "file", accept: "image/png,image/jpeg",
+    maxSizeMB: 5, typeLabel: "PNG or JPG image",
+  },
 ];
 
-// optional company logo with default building icon
-function LogoUpload({ logo, setLogo }) {
+function LogoUpload({ logo, setLogo, error: requiredError }) {
   const fileRef = useRef(null);
   const [error, setError] = useState("");
 
@@ -87,8 +96,9 @@ function LogoUpload({ logo, setLogo }) {
           )} */}
         </div>
         <input ref={fileRef} type="file" accept="image/png,image/jpeg" onChange={handleLogo} className="hidden" />
-        <p className="mt-2 text-xs text-stone-400">Optional. PNG, JPG up to 2MB</p>
+        <p className="mt-2 text-xs text-stone-400">Required. PNG or JPG, up to 2MB</p>
         {error && <p className="mt-1 text-sm font-semibold text-brand-700">{error}</p>}
+        {requiredError && <p className="mt-1 text-sm font-semibold text-brand-700">{requiredError}</p>}
       </div>
     </div>
   );
@@ -133,11 +143,8 @@ export default function CompanyProfileForm({ initialValues, onSave, onVerify, is
       description="Company details visible to candidates applying to your jobs."
       submitLabel="Save Company Profile"
       fields={fields}
-      initialValues={{ logo: "", ...initialValues }}
+      initialValues={{ ...initialValues, logo: initialValues?.logo || "" }}
       onSubmit={onSave}
-      before={({ values, setValue }) => (
-        <LogoUpload logo={values.logo} setLogo={(l) => setValue("logo", l)} />
-      )}
       after={() => <VerifyPrompt isVerified={isVerified} onVerify={onVerify} />}
     />
   );

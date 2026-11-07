@@ -4,6 +4,7 @@ import DashboardOverview from "../components/DashboardOverview";
 import EmployerProfileForm from "./EmployerProfileForm"; 
 import CompanyProfileForm from "./CompanyProfileForm";
 import CompanyVerificationForm from "./CompanyVerificationForm";
+import CompanyProfile from "./CompanyProfile";
 import {
   ArrowUpRight,
   BriefcaseBusiness,
@@ -606,7 +607,7 @@ const handleVerificationSubmit = ({ website, document }) => {
     onBack={() => setActiveTab("Company Profile")}
   />
 )}
-
+{/* {activeTab === "My Posted Jobs" && <CompanyProfile />} */}
 {activeTab === "Dashboard" && (
   <>
   {/* Banner card + statistics (shared component) */}
