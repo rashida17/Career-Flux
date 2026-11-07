@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import {
   Search,
   Layers,
@@ -23,13 +23,9 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import Header from "../components/Header";
 import FeaturedJobs from "../components/FeaturedJobs";
-import Footer from "../components/Footer";
-import RoleSelectModal from "../components/RoleSelectModal";
 import Dropdown from "../components/Dropdown"; // Fixed import path
 import { categories } from "../data/jobs";
-import { useNavigate } from "react-router-dom";
 
 // ==========================================
 // HERO SECTION COMPONENT (Integrated directly)
@@ -466,9 +462,7 @@ function About() {
 const emptySearch = { query: "", category: "", location: "" };
 
 export default function Home() {
-  const navigate = useNavigate();
   const [search, setSearch] = useState(emptySearch);
-  const [roleModalOpen, setRoleModalOpen] = useState(false); // NEW
 
   const handleSearch = (values) => {
     setSearch(values);
@@ -479,47 +473,13 @@ export default function Home() {
 
   const handleClear = () => setSearch(emptySearch);
 
-  // Header buttons call this. Register opens the role choice.
-  const handleAuth = (type) => {
-    if (type === "Register") {
-      setRoleModalOpen(true); // NEW
-      return;
-    }
-    navigate("/login");
-  };
-
-  const closeRoleModal = useCallback(() => setRoleModalOpen(false), []); // NEW
-
-  // role is 'seeker' or 'provider'
-  const handleRoleSelect = (role) => {
-    setRoleModalOpen(false);
-    const roleToType = { seeker: "jobseeker", provider: "employer" };
-    navigate(`/signup?type=${roleToType[role] || "jobseeker"}`);
-  };
-
-  const handleSignInFromModal = () => {
-    setRoleModalOpen(false); // NEW
-    navigate("/login");
-  };
-
   return (
-    <div className="bg-white text-slate-800 antialiased selection:bg-brand-500 selection:text-white">
-      <Header onAuth={handleAuth} />
-      <main>
+    <div className="flex flex-1 flex-col bg-white text-slate-800 antialiased selection:bg-brand-500 selection:text-white">
+      <main className="flex-1">
         <Hero onSearch={handleSearch} />
         <FeaturedJobs search={search} onClear={handleClear} />
         <About />
       </main>
-      <Footer />
-
-      {/* NEW: role choice window */}
-      {roleModalOpen && (
-        <RoleSelectModal
-          onSelect={handleRoleSelect}
-          onSignIn={handleSignInFromModal}
-          onClose={closeRoleModal}
-        />
-      )}
     </div>
   );
 }

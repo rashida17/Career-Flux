@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import Header from "./Header";
-import Footer from "./Footer";
 
 // Animation keyframes (kept inside this file, prefixed "auth" so they never clash with other CSS)
 const AUTH_KEYFRAMES = `
@@ -286,9 +284,8 @@ export default function AuthLayout({
   children,
 }) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex flex-1 flex-col">
       <style>{AUTH_KEYFRAMES}</style>
-      <Header />
 
       <main className="hero-bg flex flex-1 items-center justify-center px-5 pb-10 pt-6">
         <div className="grid min-h-[520px] w-full max-w-[840px] grid-cols-1 overflow-hidden rounded-3xl border border-brand-100 bg-white shadow-floating min-[521px]:grid-cols-2">
@@ -337,7 +334,6 @@ export default function AuthLayout({
           />
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

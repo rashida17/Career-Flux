@@ -5,23 +5,31 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import JobSeekerDashboard from "./pages/JobSeekerDashboard";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route
-          path="/employerdashboard"
-          element={<EmployerDashboard />}
-        />
-        <Route
-          path="/jobseekerdashboard"
-          element={<JobSeekerDashboard />}
-        />
-      </Routes>
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <main className="flex flex-1 flex-col">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route
+              path="/employerdashboard"
+              element={<EmployerDashboard />}
+            />
+            <Route
+              path="/jobseekerdashboard"
+              element={<JobSeekerDashboard />}
+            />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
     </BrowserRouter>
   );
 }

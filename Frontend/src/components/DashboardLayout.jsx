@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import Header from "./Header";
-import Footer from "./Footer";
  
 export default function DashboardLayout({
   navigationItems = [],
@@ -21,10 +19,9 @@ export default function DashboardLayout({
   }
  
   return (
-    <div className="min-h-screen bg-cream font-sans text-slate-900">
-      <Header />
+    <div className="flex w-full flex-1 flex-col bg-cream font-sans text-slate-900">
  
-      <div className="mx-auto flex max-w-[1600px] gap-6 px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-[1600px] gap-6 px-4 py-6 sm:px-6 lg:px-8">
         {/* Mobile sidebar backdrop */}
         {sidebarOpen && (
           <button
@@ -119,7 +116,6 @@ export default function DashboardLayout({
         </main>
       </div>
  
-      <Footer />
     </div>
   );
 }
