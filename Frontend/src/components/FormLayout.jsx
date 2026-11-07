@@ -96,22 +96,24 @@ export function TextAreaField({ label, optional, error, maxLength, value = "", r
   return (
     <div>
       <FieldShell label={label} optional={optional} error={error}>
-        <textarea
-          {...rest}
-          rows={rows}
-          maxLength={maxLength}
-          value={value}
-          aria-invalid={Boolean(error)}
-          className={`${inputBase} resize-none px-4 leading-relaxed ${
-            error ? inputError : inputOk
-          }`}
-        />
+        <div className="relative">
+          <textarea
+            {...rest}
+            rows={rows}
+            maxLength={maxLength}
+            value={value}
+            aria-invalid={Boolean(error)}
+            className={`${inputBase} resize-none px-4 pb-8 leading-relaxed ${
+              error ? inputError : inputOk
+            }`}
+          />
+          {maxLength && (
+            <p className="absolute bottom-2 right-3 text-xs text-stone-400">
+              {value.length}/{maxLength}
+            </p>
+          )}
+        </div>
       </FieldShell>
-      {maxLength && (
-        <p className="mt-1.5 text-right text-xs text-stone-400">
-          {value.length}/{maxLength}
-        </p>
-      )}
     </div>
   );
 }
@@ -266,6 +268,14 @@ export default function FormLayout({
 
   const renderField = (f) => {
     const common = { label: f.label, optional: f.optional, error: errors[f.name] };
+
+    if (f.render)
+      return f.render({
+        ...common,
+        name: f.name,
+        value: values[f.name],
+        setValue: (value) => setValue(f.name, value),
+      });
 
     if (f.type === "select")
       return (

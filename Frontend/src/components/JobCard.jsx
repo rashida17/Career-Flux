@@ -10,7 +10,18 @@ const neutralBadgeClass =
   'inline-flex items-center whitespace-nowrap rounded-full border border-transparent bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700';
 
 export default function JobCard({ job, isSaved, onToggleSave, onView }) {
-  const statusBadge = getStatusBadge(job);
+  const statusBadge =
+    getStatusBadge(job) ??
+    job.badges?.find(({ label }) => ['Urgent', 'Featured', 'New'].includes(label))?.label;
+  const typeLabel =
+    TYPE_LABELS[job.type] ??
+    job.badges?.find(({ label }) => ['Full time', 'Part time', 'Internship'].includes(label))?.label ??
+    job.type;
+  const workMode =
+    job.workMode ??
+    job.badges?.find(({ label }) => ['Remote', 'On-site', 'Hybrid'].includes(label))?.label;
+  const postedLabel =
+    job.postedDaysAgo != null ? formatPosted(job.postedDaysAgo) : job.posted ?? 'Recently posted';
 
   return (
     <article
@@ -34,7 +45,7 @@ export default function JobCard({ job, isSaved, onToggleSave, onView }) {
                   href={`#job-${job.id}`}
                   onClick={(e) => {
                     e.preventDefault(); // remove when your job details page exists
-                    onView(job);
+                    onView?.(job);
                   }}
                   className="line-clamp-2 outline-none after:absolute after:inset-0 after:content-['']"
                 >
@@ -46,43 +57,45 @@ export default function JobCard({ job, isSaved, onToggleSave, onView }) {
           </div>
 
           {/* z-10 keeps the heart clickable above the stretched link */}
-          <button
-            type="button"
-            aria-label={isSaved ? `Remove ${job.title} from saved jobs` : `Save ${job.title}`}
-            aria-pressed={isSaved}
-            onClick={() => onToggleSave(job.id)}
-            className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-transform duration-200 hover:bg-brand-50 focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-125"
-          >
-            <Heart
-              className={`h-4 w-4 transition-colors duration-200 ${
-                isSaved ? 'fill-brand-500 text-brand-500' : 'text-slate-400 hover:text-brand-500'
-              }`}
-            />
-          </button>
+          {onToggleSave && (
+            <button
+              type="button"
+              aria-label={isSaved ? `Remove ${job.title} from saved jobs` : `Save ${job.title}`}
+              aria-pressed={isSaved}
+              onClick={() => onToggleSave(job.id)}
+              className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-transform duration-200 hover:bg-brand-50 focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-125"
+            >
+              <Heart
+                className={`h-4 w-4 transition-colors duration-200 ${
+                  isSaved ? 'fill-brand-500 text-brand-500' : 'text-slate-400 hover:text-brand-500'
+                }`}
+              />
+            </button>
+          )}
         </div>
 
         {/* Max 3 badges in ONE row: status, job type, work mode */}
         <div className="mt-3 flex flex-nowrap items-center gap-1.5 overflow-hidden">
           {statusBadge && <span className={statusBadgeClass}>{statusBadge}</span>}
-          <span className={neutralBadgeClass}>{TYPE_LABELS[job.type]}</span>
-          <span className={neutralBadgeClass}>{job.workMode}</span>
+          {typeLabel && <span className={neutralBadgeClass}>{typeLabel}</span>}
+          {workMode && <span className={neutralBadgeClass}>{workMode}</span>}
         </div>
 
         {/* Salary */}
         <p className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-slate-900">
-          <Banknote className="h-4 w-4 shrink-0 text-teal-600" />
-          {formatSalary(job.salary)}
+          <Banknote className="h-4 w-4 shrink-0 text-brand-500" />
+          {typeof job.salary === 'string' ? job.salary : formatSalary(job.salary)}
         </p>
 
         {/* Experience and posting time, each with its own icon */}
         <div className="mt-3 flex items-center gap-4 text-xs text-stone-500">
           <span className="flex items-center gap-1.5">
             <Briefcase className="h-3.5 w-3.5 shrink-0" />
-            {job.experience}
+            {job.experience ?? job.level}
           </span>
           <span className="flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5 shrink-0" />
-            {formatPosted(job.postedDaysAgo)}
+            {postedLabel}
           </span>
         </div>
       </div>
@@ -90,7 +103,7 @@ export default function JobCard({ job, isSaved, onToggleSave, onView }) {
       {/* Footer pinned to the bottom of every card */}
       <div className="mt-5 flex items-center justify-between gap-3 border-t border-stone-100 pt-4">
         <p className="flex min-w-0 items-center gap-1.5 text-xs text-stone-500">
-          <MapPin className="h-3.5 w-3.5 shrink-0 text-teal-500" />
+          <MapPin className="h-3.5 w-3.5 shrink-0 text-brand-500" />
           <span className="truncate">{job.location}</span>
         </p>
 
