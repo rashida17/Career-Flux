@@ -5,6 +5,9 @@ import EmployerProfileForm from "./EmployerProfileForm";
 import CompanyProfileForm from "./CompanyProfileForm";
 import CompanyVerificationForm from "./CompanyVerificationForm";
 import CompanyProfile from "./CompanyProfile";
+import PostJob from "./PostJob";
+import ReportsComplaints from "./ReportsComplaints";
+import MyPostedJobs from "./MyPostedJobs";
 import {
   ArrowUpRight,
   BriefcaseBusiness,
@@ -504,11 +507,26 @@ function ApplicantCard({ applicant, onStatusChange }) {
   );
 }
 // MAIN EMPLOYER DASHBOARD
-export default function EmployerDashboard() {
-  const [activeTab, setActiveTab] = useState("Dashboard");
+export default function EmployerDashboard({ initialTab = "Dashboard" }) {
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [postedJobs, setPostedJobs] = useState([]);
   const [applicants, setApplicants] = useState(initialApplicants);
   const [notice, setNotice] = useState("");
  
+
+  const handlePostJob = (jobDetails) => {
+  const newJob = {
+    ...jobDetails,
+    id: Date.now(),
+    status: "Active",
+    postedOn: new Date().toISOString().slice(0, 10),
+  };
+
+  setPostedJobs((current) => [newJob, ...current]);
+  setNotice("Your job has been posted successfully.");
+  setActiveTab("My Posted Jobs");
+};
+  
  
   const handleApplicantStatusChange = (selectedApplicant, newStatus) => {
     setApplicants((currentApplicants) =>
@@ -607,7 +625,31 @@ const handleVerificationSubmit = ({ website, document }) => {
     onBack={() => setActiveTab("Company Profile")}
   />
 )}
-{/* {activeTab === "My Posted Jobs" && <CompanyProfile />} */}
+{activeTab === "Post a Job" && (
+  <PostJob onPostJob={handlePostJob} />
+)}
+
+{activeTab === "Reports & Complaints" && <ReportsComplaints />}
+
+{activeTab === "My Posted Jobs" && (
+  <MyPostedJobs
+    jobs={postedJobs}
+    onDelete={(jobId) =>
+      setPostedJobs((current) =>
+        current.filter((job) => job.id !== jobId)
+      )
+    }
+    onClose={(jobId) =>
+      setPostedJobs((current) =>
+        current.map((job) =>
+          job.id === jobId
+            ? { ...job, status: "Closed" }
+            : job
+        )
+      )
+    }
+  />
+)}
 {activeTab === "Dashboard" && (
   <>
   {/* Banner card + statistics (shared component) */}

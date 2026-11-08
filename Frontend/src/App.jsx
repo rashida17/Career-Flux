@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Home from "./pages/Home";
@@ -14,22 +15,44 @@ export default function App() {
     <BrowserRouter>
       <div className="flex min-h-screen flex-col">
         <Header />
+
         <main className="flex flex-1 flex-col">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
+
             <Route path="/admin" element={<AdminDashboard />} />
+
             <Route
               path="/employerdashboard"
               element={<EmployerDashboard />}
             />
+
+            <Route
+              path="/employer"
+              element={<EmployerDashboard />}
+            />
+
+            <Route
+              path="/post-job"
+              element={<EmployerDashboard initialTab="Post a Job" />}
+            />
+
+            <Route
+              path="/reports-complaints"
+              element={
+                <EmployerDashboard initialTab="Reports & Complaints" />
+              }
+            />
+
             <Route
               path="/jobseekerdashboard"
               element={<JobSeekerDashboard />}
             />
           </Routes>
         </main>
+
         <Footer />
       </div>
     </BrowserRouter>
