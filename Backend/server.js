@@ -3,7 +3,9 @@ import express from "express";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import errorHandler from "./middleware/errorHandler.js";
+
 
 const app = express();
 
@@ -12,6 +14,7 @@ app.use(express.json());
 
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use((req, res) => res.status(404).json({ message: "Route not found" }));
 app.use(errorHandler);
