@@ -18,11 +18,13 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
-    password: {
+        password: {
       type: String,
-      required: true,
+      required: function () { return !this.googleId; }, // Google users have no password
       select: false,
     },
+
+    googleId: { type: String, unique: true, sparse: true },
 
    role: {
   type: String,
@@ -46,6 +48,7 @@ userSchema.pre("save", async function () {
 
 // Password comparison
 userSchema.methods.comparePassword = function (plain) {
+  if (!this.password) return Promise.resolve(false); // Google-only account
   return bcrypt.compare(plain, this.password);
 };
 
