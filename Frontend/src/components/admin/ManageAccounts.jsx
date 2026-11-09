@@ -1,8 +1,11 @@
 
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, UserRound, ShieldCheck } from 'lucide-react';
 
-export default function ManageAccounts() {
+export default function ManageAccounts({ mode = 'recent' }) {
+  const navigate = useNavigate();
+
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -13,7 +16,7 @@ export default function ManageAccounts() {
     localStorage.getItem('careerFluxToken') ||
     sessionStorage.getItem('careerFluxToken');
 
-  // Fetch accounts from MongoDB
+  // Fetch users according to mode
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -25,7 +28,12 @@ export default function ManageAccounts() {
         throw new Error('Login token not found. Please login again.');
       }
 
-      const response = await fetch('http://localhost:5000/api/admin/users', {
+      const endpoint =
+        mode === 'recent'
+          ? 'http://localhost:5000/api/admin/users/recent'
+          : 'http://localhost:5000/api/admin/users';
+
+      const response = await fetch(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -47,12 +55,17 @@ export default function ManageAccounts() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [mode]);
 
   // Activate / Deactivate account
   const toggleStatus = async (user) => {
     try {
       const token = getToken();
+
+      if (!token) {
+        throw new Error('Login token not found. Please login again.');
+      }
+
       const newStatus = !user.isActive;
 
       const response = await fetch(
@@ -93,6 +106,8 @@ export default function ManageAccounts() {
       .includes(search.toLowerCase())
   );
 
+  const isRecentMode = mode === 'recent';
+
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-soft sm:p-6">
 
@@ -100,29 +115,43 @@ export default function ManageAccounts() {
       <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">
-            Manage Accounts
+            {isRecentMode ? 'Recently Added Users' : 'Manage Accounts'}
           </h3>
 
           <p className="mt-1 text-sm text-slate-500">
-            Manage and monitor registered platform accounts
+            {isRecentMode
+              ? 'Users registered in the last 24 hours'
+              : 'Manage and monitor registered platform accounts'}
           </p>
         </div>
 
-        {/* Search */}
-        <label className="relative block w-full sm:max-w-xs">
-          <Search
-            size={17}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-          />
+        {/* Search and View All */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label className="relative block w-full sm:max-w-xs">
+            <Search
+              size={17}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
 
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search accounts..."
-            className="w-full rounded-xl border border-stone-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-          />
-        </label>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search accounts..."
+              className="w-full rounded-xl border border-stone-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            />
+          </label>
+
+          {isRecentMode && (
+            <button
+              type="button"
+              onClick={() => navigate('/admin/manage-accounts')}
+              className="whitespace-nowrap rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-600"
+            >
+              View All
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Error */}

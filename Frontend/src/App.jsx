@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Home from "./pages/Home";
@@ -9,6 +8,7 @@ import EmployerDashboard from "./pages/EmployerDashboard";
 import JobSeekerDashboard from "./pages/JobSeekerDashboard";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import ManageAccountsPage from "./pages/ManageAccountsPage";
 
 export default function App() {
   return (
@@ -23,6 +23,11 @@ export default function App() {
             <Route path="/signup" element={<SignUp />} />
 
             <Route path="/admin" element={<AdminDashboard />} />
+
+            <Route
+              path="/admin/manage-accounts"
+              element={<ManageAccountsPage />}
+            />
 
             <Route
               path="/employerdashboard"
