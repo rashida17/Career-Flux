@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import DashboardLayout from '../components/DashboardLayout';
 
@@ -10,7 +11,6 @@ import ManageAccounts from '../components/admin/ManageAccounts';
 import CompanyVerification from '../components/admin/CompanyVerification';
 
 import {
-  CalendarDays,
   Users,
   UserRound,
   Building2,
@@ -69,13 +69,28 @@ const stats = [
 ];
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [activeTab, setActiveTab] = useState(
+    () => location.state?.activeTab || 'Dashboard'
+  );
+
+  // Sidebar Navigation
+  const handleNavigate = (label) => {
+    if (label === 'Manage Accounts') {
+      navigate('/admin/manage-accounts');
+      return;
+    }
+
+    setActiveTab(label);
+  };
 
   return (
     <DashboardLayout
       navigationItems={adminNavigationItems}
       activeTab={activeTab}
-      onNavigate={setActiveTab}
+      onNavigate={handleNavigate}
       workspaceLabel="Admin Workspace"
       menuTitle="Admin Menu"
       welcomeTitle="Welcome back, Admin!"
@@ -103,9 +118,11 @@ export default function AdminDashboard() {
 
                 <div className="mt-3 flex flex-wrap items-center gap-1 text-sm">
                   <TrendingUp size={14} className="shrink-0 text-brand-500" />
+
                   <span className="font-bold text-brand-600">
                     {stat.growth}
                   </span>
+
                   <span className="text-xs text-slate-500">
                     vs. last week
                   </span>
@@ -129,7 +146,10 @@ export default function AdminDashboard() {
           </div>
 
           <RecentComplaints />
-          <ManageAccounts />
+
+          {/* Recently Added Users - Last 24 Hours */}
+          <ManageAccounts mode="recent" />
+
           <CompanyVerification />
         </>
       )}
@@ -140,11 +160,6 @@ export default function AdminDashboard() {
           <PlatformChart />
           <UserDistributionChart />
         </div>
-      )}
-
-      {/* Manage Accounts */}
-      {activeTab === 'Manage Accounts' && (
-        <ManageAccounts />
       )}
 
       {/* Reports & Complaints */}

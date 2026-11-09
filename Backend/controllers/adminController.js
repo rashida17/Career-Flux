@@ -54,3 +54,27 @@ export async function updateUserStatus(req, res, next) {
     next(error);
   }
 }
+
+// GET: Fetch users registered in the last 24 hours
+export async function getRecentUsers(req, res, next) {
+  try {
+    const last24Hours = new Date(
+      Date.now() - 24 * 60 * 60 * 1000
+    );
+
+    const users = await User.find({
+      role: { $in: ["jobseeker", "employer"] },
+      createdAt: { $gte: last24Hours },
+    })
+      .select("name email role isActive createdAt")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      message: "Recent users fetched successfully",
+      totalUsers: users.length,
+      users,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
