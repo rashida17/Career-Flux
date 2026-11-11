@@ -33,6 +33,7 @@ export default function Dropdown({
   icon: Icon,
   variant = 'field',
   className = '',
+  invalid = false,
 }) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0); // option highlighted by mouse or keyboard
@@ -137,10 +138,13 @@ export default function Dropdown({
         aria-expanded={open}
         aria-controls={listId}
         aria-activedescendant={open ? optionId(activeIndex) : undefined}
+        aria-invalid={invalid || undefined}
         aria-label={ariaLabel ? `${ariaLabel}: ${buttonText}` : undefined}
         onClick={() => (open ? setOpen(false) : openList())}
         onKeyDown={handleKeyDown}
-        className={`${triggerBase} ${v.base} ${open ? v.open : v.closed}`}
+        className={`${triggerBase} ${v.base} ${open ? v.open : v.closed} ${
+          invalid ? 'border-brand-300' : ''
+        }`}
       >
         {Icon && <Icon className="h-5 w-5 shrink-0 text-brand-500" aria-hidden="true" />}
         <span className={`min-w-0 flex-1 truncate text-sm ${textClass}`}>{buttonText}</span>

@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
-import { CheckCircle2, ChevronDown, FileText, UploadCloud } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CheckCircle2, FileText, UploadCloud } from "lucide-react";
+import Dropdown from "./Dropdown";
 /*  Shared styles  */
 const inputBase =
   "w-full rounded-2xl border bg-stone-50 py-3.5 text-sm font-medium text-slate-800 " +
@@ -9,6 +10,7 @@ const inputError = "border-brand-300 bg-white focus:border-brand-400";
 
 const URL_REGEX = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/i;
 const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
+const PROFILE_STEPS = ["Employer profile", "Company profile", "Verification (optional)"];
 
 // Today's date in YYYY-MM-DD (local time)
 const todayISO = () => {
@@ -22,6 +24,7 @@ export function FieldShell({ label, optional, error, children }) {
     <label className="block">
       <span className="mb-2 block text-sm font-semibold text-slate-800">
         {label}
+        {!optional && <span className="ml-1 text-brand-600" aria-hidden="true">*</span>}
         {optional && (
           <span className="ml-1.5 text-xs font-medium text-stone-400">(Optional)</span>
         )}
@@ -57,37 +60,24 @@ export function TextField({ label, icon: Icon, optional, error, ...inputProps })
 }
 
 export function SelectField({
-  label, icon: Icon, optional, error, options = [], placeholder, value, ...rest
+  label, icon, optional, error, options = [], placeholder, value, onChange, id,
 }) {
   return (
     <FieldShell label={label} optional={optional} error={error}>
-      <span className="relative block">
-        {Icon && (
-          <Icon
-            size={18}
-            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-brand-500"
-          />
-        )}
-        <select
-          {...rest}
-          value={value}
-          aria-invalid={Boolean(error)}
-          className={`${inputBase} ${Icon ? "pl-11" : "pl-4"} appearance-none pr-11 ${
-            value ? "" : "text-stone-400"
-          } ${error ? inputError : inputOk}`}
-        >
-          <option value="">{placeholder}</option>
-          {options.map((opt) => (
-            <option key={opt} value={opt} className="text-slate-800">
-              {opt}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          size={18}
-          className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-stone-400"
-        />
-      </span>
+      <Dropdown
+        id={id}
+        ariaLabel={label}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        icon={icon}
+        variant="field"
+        invalid={Boolean(error)}
+        options={[
+          { value: "", label: placeholder },
+          ...options.map((option) => ({ value: option, label: option })),
+        ]}
+      />
     </FieldShell>
   );
 }
@@ -141,6 +131,7 @@ export function FileField({
     <div>
       <span className="mb-2 block text-sm font-semibold text-slate-800">
         {label}
+        {!optional && <span className="ml-1 text-brand-600" aria-hidden="true">*</span>}
         {optional && (
           <span className="ml-1.5 text-xs font-medium text-stone-400">(Optional)</span>
         )}
@@ -197,6 +188,84 @@ export function FileField({
   );
 }
 
+export function ProfileProgress({ completedSections }) {
+  const [hoveredSegment, setHoveredSegment] = useState(null);
+  const circumference = 2 * Math.PI * 17.5;
+  const segmentLength = circumference / PROFILE_STEPS.length;
+  const dashLength = segmentLength - 3;
+
+  return (
+    <div
+      className="group relative shrink-0"
+      aria-label={`Profile progress: employer profile ${
+        completedSections?.[0] ? "complete" : "incomplete"
+      }, company profile ${
+        completedSections?.[1] ? "complete" : "incomplete"
+      }, verification ${completedSections?.[2] ? "complete" : "optional and incomplete"}.`}
+    >
+      <svg className="h-[5.5rem] w-[5.5rem] -rotate-90" viewBox="0 0 40 40" aria-hidden="true">
+        {PROFILE_STEPS.map((step, index) => {
+          const complete = Boolean(completedSections?.[index]);
+          const status = complete ? "complete" : index === 2 ? "optional" : "incomplete";
+          const color =
+            index === 2
+              ? complete
+                ? "#d97706"
+                : "#fcd34d"
+              : complete
+                ? "#c84b31"
+                : "#e7e5e4";
+
+          const segmentProps = {
+            cx: "20",
+            cy: "20",
+            r: "17.5",
+            fill: "none",
+            strokeDasharray: `${dashLength} ${circumference - dashLength}`,
+            strokeDashoffset: -index * segmentLength,
+          };
+
+          return (
+            <g key={step}>
+            <circle
+              {...segmentProps}
+              stroke={color}
+              strokeWidth="3"
+              strokeLinecap="round"
+              className="transition-[stroke] duration-300"
+            />
+            <circle
+              {...segmentProps}
+              stroke="transparent"
+              strokeWidth="10"
+              strokeLinecap="round"
+              pointerEvents="stroke"
+              tabIndex={0}
+              aria-label={`${step}: ${status}`}
+              onMouseEnter={() => setHoveredSegment(`${step}: ${status}`)}
+              onMouseLeave={() => setHoveredSegment(null)}
+              onFocus={() => setHoveredSegment(`${step}: ${status}`)}
+              onBlur={() => setHoveredSegment(null)}
+            />
+            </g>
+          );
+        })}
+      </svg>
+      <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-700">
+        Progress
+      </span>
+      {hoveredSegment && (
+        <span
+          role="tooltip"
+          className="absolute right-0 top-full z-30 mt-1 whitespace-nowrap rounded-lg bg-brand-800 px-3 py-2 text-xs font-semibold text-white shadow-lg"
+        >
+          {hoveredSegment}
+        </span>
+      )}
+    </div>
+  );
+}
+
 /*  validation */
 function validateField(field, value, values) {
   const label = (field.label || field.name).toLowerCase();
@@ -232,6 +301,11 @@ export default function FormLayout({
   description,
   submitLabel = "Save",
   submitPlacement = "header", // "header" | "bottom"
+  bottomSubmitClassName = "",
+  nextLabel,
+  onNext,
+  completedSections,
+  onCompletionChange,
   fields,
   initialValues = {},
   onSubmit,
@@ -246,6 +320,14 @@ export default function FormLayout({
     return { ...base, ...initialValues };
   });
   const [errors, setErrors] = useState({});
+  const onCompletionChangeRef = useRef(onCompletionChange);
+  onCompletionChangeRef.current = onCompletionChange;
+
+  useEffect(() => {
+    onCompletionChangeRef.current?.(
+      fields.every((field) => !validateField(field, values[field.name], values))
+    );
+  }, [fields, values]);
 
   const setValue = (name, value) => {
     setValues((prev) => ({ ...prev, [name]: value }));
@@ -262,6 +344,23 @@ export default function FormLayout({
     setErrors(next);
     if (Object.keys(next).length) return;
     onSubmit?.(values);
+  };
+
+  const isFormValid = fields.every(
+    (field) => !validateField(field, values[field.name], values)
+  );
+
+  const handleNext = () => {
+    const next = {};
+    fields.forEach((field) => {
+      const message = validateField(field, values[field.name], values);
+      if (message) next[field.name] = message;
+    });
+    setErrors(next);
+    if (Object.keys(next).length) return;
+
+    onSubmit?.(values);
+    onNext?.(values);
   };
 
   const slotProps = { values, setValue };
@@ -286,7 +385,8 @@ export default function FormLayout({
           options={f.options}
           placeholder={f.placeholder || "Select an option"}
           value={values[f.name]}
-          onChange={(e) => setValue(f.name, e.target.value)}
+          onChange={(value) => setValue(f.name, value)}
+          id={f.name}
         />
       );
 
@@ -300,6 +400,7 @@ export default function FormLayout({
           placeholder={f.placeholder}
           value={values[f.name]}
           onChange={(e) => setValue(f.name, e.target.value)}
+          id={f.name}
         />
       );
 
@@ -325,6 +426,7 @@ export default function FormLayout({
         placeholder={f.placeholder}
         autoComplete={f.autoComplete}
         max={f.type === "date" ? todayISO() : undefined}
+        id={f.name}
         value={values[f.name]}
         onChange={(e) => setValue(f.name, e.target.value)}
         
@@ -352,10 +454,13 @@ export default function FormLayout({
     >
       {/* Header */}
       <div className="flex flex-col gap-4 border-b border-stone-100 pb-6 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+        <div className="flex flex-1 items-start justify-between gap-4">
+          <div>
           {headerTop}
           <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{title}</h1>
           {description && <p className="mt-1 text-sm text-stone-500">{description}</p>}
+          </div>
+          {completedSections && <ProfileProgress completedSections={completedSections} />}
         </div>
         {submitPlacement === "header" && submitBtn("shrink-0 self-start")}
       </div>
@@ -376,9 +481,27 @@ export default function FormLayout({
         ))}
       </div>
 
-      {after && <div className="mt-8">{after(slotProps)}</div>}
+      {submitPlacement === "bottom" && (
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          {submitBtn(
+            nextLabel
+              ? "min-w-48 px-8"
+              : `w-full py-3.5 ${bottomSubmitClassName}`
+          )}
+          {nextLabel && (
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={!isFormValid}
+              className="min-w-48 rounded-xl bg-brand-500 px-8 py-3 text-sm font-bold text-white transition-colors hover:bg-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-400"
+            >
+              {nextLabel}
+            </button>
+          )}
+        </div>
+      )}
 
-      {submitPlacement === "bottom" && <div className="mt-6">{submitBtn("w-full py-3.5")}</div>}
+      {after && <div className="mt-8">{after(slotProps)}</div>}
     
     </form>
   );

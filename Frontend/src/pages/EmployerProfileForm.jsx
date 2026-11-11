@@ -65,12 +65,23 @@ function PhotoUpload({ photo, setPhoto }) {
   );
 }
 
-export default function EmployerProfileForm({ initialValues, onSave }) {
+export default function EmployerProfileForm({
+  initialValues,
+  onSave,
+  onNext,
+  completedSections,
+  onCompletionChange,
+}) {
   return (
     <FormLayout
       title="Employer Personal Profile"
       description="Personal hiring manager contact details for direct candidate outreach."
-      submitLabel="Update Details"
+      submitLabel="Save"
+      submitPlacement="bottom"
+      nextLabel="Next"
+      onNext={onNext}
+      completedSections={completedSections}
+      onCompletionChange={onCompletionChange}
       fields={fields}
       initialValues={{ photo: "", ...initialValues }}
       onSubmit={onSave}

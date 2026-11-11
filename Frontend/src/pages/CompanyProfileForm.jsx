@@ -1,14 +1,14 @@
 import { useRef, useState } from "react";
 import {
-  Briefcase, Building2, CalendarDays, Globe, Home, Landmark, Layers, Mail, MapPin, Phone, ShieldCheck, Users,
+  ArrowRight, Briefcase, Building2, CalendarDays, Globe, Home, Landmark, Mail, MapPin, Phone, Users,
 } from "lucide-react";
 import FormLayout from "../components/FormLayout";
 
 const fields = [
   {
-    name: "logo", label: "Company Logo", type: "file", full: true,
-    render: ({ value, setValue, error }) => (
-      <LogoUpload logo={value} setLogo={setValue} error={error} />
+    name: "logo", type: "file", full: true,
+    render: ({ label, value, setValue, error }) => (
+      <LogoUpload label={label} logo={value} setLogo={setValue} error={error} />
     ),
   },
   { name: "companyName", label: "Company Name", icon: Building2, placeholder: "e.g. TechCorp Solutions Inc.", autoComplete: "organization" },
@@ -50,7 +50,7 @@ const fields = [
   },
 ];
 
-function LogoUpload({ logo, setLogo, error: requiredError }) {
+function LogoUpload({ label, logo, setLogo, error: requiredError }) {
   const fileRef = useRef(null);
   const [error, setError] = useState("");
 
@@ -77,6 +77,7 @@ function LogoUpload({ logo, setLogo, error: requiredError }) {
         )}
       </div>
       <div>
+        <p className="mb-2 text-sm font-semibold text-slate-800">{label}</p>
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
@@ -104,48 +105,53 @@ function LogoUpload({ logo, setLogo, error: requiredError }) {
   );
 }
 
-//  extra: the verification prompt at the bottom
-function VerifyPrompt({ isVerified, onVerify }) {
+function PublicProfilePrompt({ onViewProfile }) {
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-brand-100 bg-brand-50 p-5 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-3">
         <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-brand-500">
-          <ShieldCheck size={22} />
+          <Building2 size={22} />
         </span>
         <div>
-          <p className="text-sm font-bold text-slate-900">
-            {isVerified ? "Your company is verified" : "Get listed as a Trusted Company"}
-          </p>
+          <p className="text-sm font-bold text-slate-900">Company public profile</p>
           <p className="mt-0.5 text-sm text-stone-600">
-            {isVerified
-              ? "Candidates can see the verified badge on your company profile and jobs."
-              : "Verify your company to appear in our trusted companies list and earn the verified badge that candidates look for."}
+            Preview how candidates see your company information and open roles.
           </p>
         </div>
       </div>
-      {!isVerified && (
-        <button
-          type="button"
-          onClick={onVerify}
-          className="shrink-0 rounded-xl border border-brand-500 bg-white px-6 py-3 text-sm font-bold text-brand-600 transition-colors hover:bg-brand-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
-        >
-          Verify Your Company
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={onViewProfile}
+        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-brand-500 bg-white px-6 py-3 text-sm font-bold text-brand-600 transition-colors hover:bg-brand-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
+      >
+        View Public Profile <ArrowRight size={16} />
+      </button>
     </div>
   );
 }
 
-export default function CompanyProfileForm({ initialValues, onSave, onVerify, isVerified = false }) {
+export default function CompanyProfileForm({
+  initialValues,
+  onSave,
+  onNext,
+  onViewProfile,
+  completedSections,
+  onCompletionChange,
+}) {
   return (
     <FormLayout
       title="Company Profile"
       description="Company details visible to candidates applying to your jobs."
-      submitLabel="Save Company Profile"
+      submitLabel="Save"
+      submitPlacement="bottom"
+      nextLabel="Next"
+      onNext={onNext}
+      completedSections={completedSections}
+      onCompletionChange={onCompletionChange}
       fields={fields}
       initialValues={{ ...initialValues, logo: initialValues?.logo || "" }}
       onSubmit={onSave}
-      after={() => <VerifyPrompt isVerified={isVerified} onVerify={onVerify} />}
+      after={() => <PublicProfilePrompt onViewProfile={onViewProfile} />}
     />
   );
 }

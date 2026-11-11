@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import DashboardOverview from "../components/DashboardOverview";
 import ApplicantCard from "../components/ApplicantCard";
@@ -11,11 +11,13 @@ import ReportsComplaints from "./ReportsComplaints";
 import MyPostedJobs from "./MyPostedJobs";
 import AllApplications from "./AllApplications";
 import SearchCandidates from "./SearchCandidate"
+import { buildCompanyProfile } from "./CompanyProfile";
 import {
   ArrowUpRight,
   BriefcaseBusiness,
   Building2,
   Check,
+  CheckCircle2,
   ChevronRight,
   FileCheck2,
   FolderOpen,
@@ -27,7 +29,6 @@ import {
   ShieldCheck,
   Users,
   UserRound,
-  X,
 } from "lucide-react";
  
 import {
@@ -395,6 +396,36 @@ export default function EmployerDashboard({ initialTab = "Dashboard" }) {
   const [postedJobs, setPostedJobs] = useState([]);
   const [applicants, setApplicants] = useState(initialApplicants);
   const [notice, setNotice] = useState("");
+  const [employerProfile, setEmployerProfile] = useState({
+    fullName: "Ahmed",
+    jobTitle: "",
+    email: "",
+    phone: "",
+  });
+  const [companyProfile, setCompanyProfile] = useState({});
+  const [companyCoverUrl, setCompanyCoverUrl] = useState("");
+  const [employerProfileComplete, setEmployerProfileComplete] = useState(false);
+  const [companyProfileComplete, setCompanyProfileComplete] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState("none"); // "none" | "pending" | "verified"
+  const completedProfileSections = [
+    employerProfileComplete,
+    companyProfileComplete,
+    verificationStatus === "pending" || verificationStatus === "verified",
+  ];
+
+  useEffect(
+    () => () => {
+      if (companyCoverUrl) URL.revokeObjectURL(companyCoverUrl);
+    },
+    [companyCoverUrl]
+  );
+
+  useEffect(() => {
+    if (!notice) return undefined;
+
+    const timer = setTimeout(() => setNotice(""), 2800);
+    return () => clearTimeout(timer);
+  }, [notice]);
  
 
   const handlePostJob = (jobDetails) => {
@@ -422,16 +453,20 @@ export default function EmployerDashboard({ initialTab = "Dashboard" }) {
  
   };
 const handleProfileSave = (profile) => {
-  // call your backend API here
+  setEmployerProfile(profile);
   setNotice("Your profile details were updated successfully.");
 };
 
-const [verificationStatus, setVerificationStatus] = useState("none"); // "none" | "pending" | "verified"
 const [companyWebsite, setCompanyWebsite] = useState("");
 
 const handleCompanySave = (company) => {
+  setCompanyProfile(company);
   setCompanyWebsite(company.website);
-  // call your backend API here
+  if (company.coverImage instanceof Blob) {
+    setCompanyCoverUrl(URL.createObjectURL(company.coverImage));
+  } else if (typeof company.coverImage === "string") {
+    setCompanyCoverUrl(company.coverImage);
+  }
   setNotice("Your company profile was saved successfully.");
 };
 
@@ -462,45 +497,59 @@ const handleVerificationSubmit = ({ website, document }) => {
           {notice && (
             <div
               role="status"
-              className="flex items-start justify-between gap-3 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800"
+              className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-xl bg-brand-800 px-4 py-3 text-xs text-white shadow-floating"
             >
-              <p>{notice}</p>
- 
-              <button
-                type="button"
-                onClick={() => setNotice("")}
-                aria-label="Dismiss message"
-                className="shrink-0"
-              >
-                <X size={17} />
-              </button>
+              <CheckCircle2 size={15} className="text-brand-200" />
+              <span>{notice}</span>
             </div>
           )}
  
       
       {activeTab === "Employer Profile" && (
   <EmployerProfileForm
-    initialValues={{
-      fullName: "Ahmed",
-      jobTitle: "",
-      email: "",
-      phone: "",
-    }}
-    onSave={handleProfileSave}
-  />
-)}
- {activeTab === "Company Profile" && (
-  <CompanyProfileForm
-    onSave={handleCompanySave}
-    onVerify={() => setActiveTab("Verification")}
-    isVerified={verificationStatus === "verified"}
-  />
-)}
+          initialValues={employerProfile}
+          onSave={handleProfileSave}
+          onNext={() => setActiveTab("Company Profile")}
+          completedSections={completedProfileSections}
+          onCompletionChange={setEmployerProfileComplete}
+        />
+      )}
+       {activeTab === "Company Profile" && (
+        <CompanyProfileForm
+          initialValues={companyProfile}
+          onSave={handleCompanySave}
+          onNext={() => setActiveTab("Verification")}
+          onViewProfile={() => setActiveTab("Company Public Profile")}
+          completedSections={completedProfileSections}
+          onCompletionChange={setCompanyProfileComplete}
+        />
+      )}
+
+      {activeTab === "Company Public Profile" && (
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={() => setActiveTab("Company Profile")}
+            className="text-sm font-semibold text-brand-600 hover:text-brand-700"
+          >
+            Back to Company Profile
+          </button>
+          <CompanyProfile
+            company={buildCompanyProfile(
+              { ...companyProfile, cover: companyCoverUrl },
+              employerProfile,
+              verificationStatus === "verified"
+            )}
+            onBack={() => setActiveTab("Company Profile")}
+          />
+        </div>
+      )}
 
 {activeTab === "Verification" && (
   <CompanyVerificationForm
     initialWebsite={companyWebsite}
     status={verificationStatus}
+    completedSections={completedProfileSections}
     onSubmit={handleVerificationSubmit}
     onBack={() => setActiveTab("Company Profile")}
   />
