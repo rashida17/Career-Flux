@@ -770,7 +770,7 @@ export default function SearchCandidates({ onViewProfile }) {
       {toast && (
         <div
           role="status"
-          className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-xl bg-brand-900 px-4 py-3 text-xs text-white shadow-floating"
+          className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-xl bg-brand-800 px-4 py-3 text-xs text-white shadow-floating"
         >
           <CheckCircle2 size={15} className="text-brand-200" />
           <span>{toast}</span>
