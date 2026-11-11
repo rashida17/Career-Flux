@@ -354,7 +354,7 @@ export default function FormLayout({
       <div className="flex flex-col gap-4 border-b border-stone-100 pb-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
           {headerTop}
-          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">{title}</h2>
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{title}</h1>
           {description && <p className="mt-1 text-sm text-stone-500">{description}</p>}
         </div>
         {submitPlacement === "header" && submitBtn("shrink-0 self-start")}

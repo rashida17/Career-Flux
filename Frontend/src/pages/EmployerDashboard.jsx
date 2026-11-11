@@ -8,6 +8,7 @@ import CompanyProfile from "./CompanyProfile";
 import PostJob from "./PostJob";
 import ReportsComplaints from "./ReportsComplaints";
 import MyPostedJobs from "./MyPostedJobs";
+import SearchCandidates from "./SearchCandidate"
 import {
   ArrowUpRight,
   BriefcaseBusiness,
@@ -570,7 +571,7 @@ const handleVerificationSubmit = ({ website, document }) => {
       menuTitle="Employer Menu"
       // welcomeTitle="Welcome back, Ahmed"
       // welcomeSubtitle="Manage jobs, applications, and candidate suggestions in one place."
-      welcomeTitle={activeTab === "Dashboard" ? "Welcome back, Ahmed" : undefined}
+      welcomeTitle={activeTab === "Dashboard" ? "Welcome Back, Ahmed" : undefined}
   welcomeSubtitle={
     activeTab === "Dashboard"
       ? "Manage jobs, applications, and candidate suggestions in one place."
@@ -650,6 +651,16 @@ const handleVerificationSubmit = ({ website, document }) => {
     }
   />
 )}
+
+{activeTab === "Search Candidates" && (
+  <SearchCandidates
+    onNotify={setNotice}
+    onViewProfile={(candidate) => {
+      // see the options below
+    }}
+  />
+)}
+
 {activeTab === "Dashboard" && (
   <>
   {/* Banner card + statistics (shared component) */}

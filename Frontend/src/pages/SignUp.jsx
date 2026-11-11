@@ -152,8 +152,11 @@ export default function SignUp() {
       : err.message;
 
   const finish = (data) => {
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    localStorage.setItem("careerFluxToken", data.token);
+    localStorage.setItem("careerFluxUser", JSON.stringify(data.user));
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.dispatchEvent(new Event("careerFluxAuthChange"));
     navigate(
       data.user.role === "employer" ? "/employerdashboard" : "/jobseekerdashboard",
     );
@@ -249,7 +252,7 @@ export default function SignUp() {
 
   return (
     <AuthLayout
-      title="Create your account"
+      title="Create Your Account"
       role={role}
       onRoleChange={setRole}
       showcase={SIGNUP[role]}
