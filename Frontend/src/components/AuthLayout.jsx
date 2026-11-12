@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // Animation keyframes (kept inside this file, prefixed "auth" so they never clash with other CSS)
 const AUTH_KEYFRAMES = `
@@ -164,6 +164,51 @@ export function Field({ icon, password = false, ...inputProps }) {
 // export const Divider = ({ children }) => (
 //   <div className="my-3 flex items-center gap-3 text-xs font-semibold text-stone-500 before:h-px before:flex-1 before:bg-stone-200 after:h-px after:flex-1 after:bg-stone-200">{children}</div>
 // );
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+export function GoogleButton({ onCredential, text = "signup_with" }) {
+  const boxRef = useRef(null);
+  const cbRef = useRef(onCredential);
+  cbRef.current = onCredential; // always call the latest handler (e.g. after the role changes)
+
+  useEffect(() => {
+    const init = () => {
+      if (!window.google || !boxRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: (res) => cbRef.current(res.credential),
+      });
+      window.google.accounts.id.renderButton(boxRef.current, {
+        theme: "outline",
+        size: "large",
+        text,
+        shape: "pill",
+        width: Math.min(400, boxRef.current.offsetWidth || 320),
+      });
+    };
+
+    if (window.google) return init();
+    let script = document.getElementById("google-gsi");
+    if (!script) {
+      script = document.createElement("script");
+      script.id = "google-gsi";
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      document.head.appendChild(script);
+    }
+    script.addEventListener("load", init);
+    return () => script.removeEventListener("load", init);
+  }, [text]);
+
+  return <div ref={boxRef} className="flex min-h-[44px] w-full justify-center" />;
+}
+
+export const Divider = ({ children }) => (
+  <div className="my-3 flex items-center gap-3 text-xs font-semibold text-stone-500 before:h-px before:flex-1 before:bg-stone-200 after:h-px after:flex-1 after:bg-stone-200">
+    {children}
+  </div>
+);
 
 export const FormError = ({ message }) =>
   message ? (

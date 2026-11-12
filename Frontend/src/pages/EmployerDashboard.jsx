@@ -1,6 +1,7 @@
 import { useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import DashboardOverview from "../components/DashboardOverview";
+import ApplicantCard from "../components/ApplicantCard";
 import EmployerProfileForm from "./EmployerProfileForm"; 
 import CompanyProfileForm from "./CompanyProfileForm";
 import CompanyVerificationForm from "./CompanyVerificationForm";
@@ -8,6 +9,8 @@ import CompanyProfile from "./CompanyProfile";
 import PostJob from "./PostJob";
 import ReportsComplaints from "./ReportsComplaints";
 import MyPostedJobs from "./MyPostedJobs";
+import AllApplications from "./AllApplications";
+import SearchCandidates from "./SearchCandidate"
 import {
   ArrowUpRight,
   BriefcaseBusiness,
@@ -16,7 +19,6 @@ import {
   ChevronRight,
   FileCheck2,
   FolderOpen,
-  GraduationCap,
   LayoutDashboard,
   ListChecks,
   Plus,
@@ -387,125 +389,6 @@ function VerificationGuide() {
     </section>
   );
 }
-
-
-// APPLICANT CARD
-function ApplicantCard({ applicant, onStatusChange }) {
-  const isShortlisted = applicant.status === "Shortlisted";
-  const isRejected = applicant.status === "Rejected";
- 
-  return (
-    <article className="rounded-xl border border-stone-200 bg-stone-50/60 p-3 transition hover:border-brand-200">
-      <div className="grid grid-cols-1 gap-4 
-      lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,1fr)_auto] 
-      lg:items-center lg:gap-5">
-        {/* Candidate information */}
-        <div className="flex min-w-0 items-start gap-3">
-          <img
-            src={applicant.image}
-            alt={applicant.name}
-            className="h-12 w-12 shrink-0 rounded-xl object-cover ring-2 ring-white"
-          />
- 
-          <div className="min-w-0">
-            <h3 className="break-words text-sm font-bold text-slate-900">
-              {applicant.name}
-            </h3>
- 
-            <p className="mt-1 flex items-start gap-1 text-xs leading-5 text-slate-500">
-              <GraduationCap size={14} className="mt-0.5 shrink-0" />
-              <span>{applicant.university}</span>
-            </p>
- 
-            <p className="mt-1 text-[11px] text-slate-400">
-              Applied: {applicant.appliedOn}
-            </p>
-          </div>
-        </div>
- 
-        {/* Job information */}
-        <div className="min-w-0 lg:border-l lg:border-stone-200 lg:pl-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Applied for
-          </p>
- 
-          <p className="mt-1 break-words text-sm font-bold text-slate-800">
-            {applicant.job}
-          </p>
- 
-          <p className="mt-1 text-xs text-slate-500">
-            Experience:{" "}
-            <span className="font-semibold text-slate-700">
-              {applicant.experience}
-            </span>
-          </p>
-        </div>
- 
-        {/* Salary information */}
-        <div className="min-w-0 lg:border-l lg:border-stone-200 lg:pl-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Expected salary
-          </p>
- 
-          <p className="mt-1 break-words text-sm font-bold text-slate-800">
-            {applicant.salary}
-          </p>
- 
-          <div className="mt-2">
-            <span
-              className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${
-                isShortlisted
-                  ? "bg-emerald-100 text-emerald-800"
-                  : isRejected
-                    ? "bg-rose-100 text-rose-800"
-                    : "bg-brand-50 text-brand-700"
-              }`}
-            >
-              {applicant.status}
-            </span>
-          </div>
-        </div>  
-<div className="flex flex-col gap-2">
-  <label
-    htmlFor={`status-${applicant.id ?? applicant.name}`}
-    className="text-xs font-medium text-slate-500"
-  >
-    Application status
-  </label>
- 
-  <select
-    id={`status-${applicant.id ?? applicant.name}`}
-    value={applicant.status}
-    onChange={(event) =>
-      onStatusChange(applicant, event.target.value)
-    }
-    className="w-full min-w-[140px] cursor-pointer rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-  >
-    <option value="New">New</option>
-    <option value="Shortlisted">Shortlist</option>
-    <option value="Accepted">Accept</option>
-    <option value="Rejected">Reject</option>
-  </select>
- 
-  <span
-    className={`text-xs font-medium ${
-      applicant.status === "Accepted"
-        ? "text-emerald-600"
-        : applicant.status === "Rejected"
-          ? "text-red-600"
-          : applicant.status === "Shortlisted"
-            ? "text-brand-600"
-            : "text-slate-500"
-    }`}
-  >
-    Current: {applicant.status}
-  </span>
-</div>
- 
-      </div>
-    </article>
-  );
-}
 // MAIN EMPLOYER DASHBOARD
 export default function EmployerDashboard({ initialTab = "Dashboard" }) {
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -537,9 +420,6 @@ export default function EmployerDashboard({ initialTab = "Dashboard" }) {
       )
     );
  
-    setNotice(
-      `${selectedApplicant.name}'s application status changed to ${newStatus}.`
-    );
   };
 const handleProfileSave = (profile) => {
   // call your backend API here
@@ -570,7 +450,7 @@ const handleVerificationSubmit = ({ website, document }) => {
       menuTitle="Employer Menu"
       // welcomeTitle="Welcome back, Ahmed"
       // welcomeSubtitle="Manage jobs, applications, and candidate suggestions in one place."
-      welcomeTitle={activeTab === "Dashboard" ? "Welcome back, Ahmed" : undefined}
+      welcomeTitle={activeTab === "Dashboard" ? "Welcome Back, Ahmed" : undefined}
   welcomeSubtitle={
     activeTab === "Dashboard"
       ? "Manage jobs, applications, and candidate suggestions in one place."
@@ -650,6 +530,22 @@ const handleVerificationSubmit = ({ website, document }) => {
     }
   />
 )}
+{activeTab === "All Applications" && (
+  <AllApplications
+    applicants={applicants}
+    onStatusChange={handleApplicantStatusChange}
+  />
+)}
+{activeTab === "Search Candidates" && (
+  <SearchCandidates
+    onNotify={setNotice}
+    onViewProfile={(candidate) => {
+      // see the options below
+    }}
+  />
+)}
+
+
 {activeTab === "Dashboard" && (
   <>
   {/* Banner card + statistics (shared component) */}
