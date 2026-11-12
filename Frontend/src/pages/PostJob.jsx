@@ -1,12 +1,35 @@
 
 import { useState } from "react";
-import { BriefcaseBusiness, CheckCircle2, Plus, X } from "lucide-react";
-import ConfigForm from "../components/FormLayout";
+import {
+  BriefcaseBusiness,
+  Monitor,
+  MapPin,
+  Users,
+  Clock3,
+  GraduationCap,
+  Banknote,
+  CalendarDays,
+  Code2,
+  Plus,
+  X,
+} from "lucide-react";
 
-// Post Job Form Fields
+import ConfigForm, {
+  FieldShell,
+} from "../components/FormLayout";
+
+const inputBase =
+  "w-full rounded-2xl border bg-stone-50 py-3.5 text-sm font-medium text-slate-800 " +
+  "placeholder:text-stone-400 outline-none shadow-none transition-colors focus:bg-white";
+
+const inputOk = "border-stone-200 focus:border-brand-400";
+const inputError = "border-brand-300 bg-white focus:border-brand-400";
+
 export default function PostJob({ onPostJob }) {
-  const [success, setSuccess] = useState("");
   const [skillInput, setSkillInput] = useState("");
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fields = [
     {
@@ -18,30 +41,19 @@ export default function PostJob({ onPostJob }) {
       required: true,
     },
     {
-      name: "department",
-      label: "Department",
-      type: "text",
-      placeholder: "e.g. Software Development",
-      required: true,
-    },
-    {
       name: "jobType",
       label: "Job Type",
       type: "select",
+      icon: BriefcaseBusiness,
       placeholder: "Select job type",
-      options: [
-        "Full-time",
-        "Part-time",
-        "Internship",
-        "Contract",
-        "Temporary",
-      ],
+      options: ["Full-time", "Part-time", "Internship"],
       required: true,
     },
     {
       name: "workMode",
       label: "Work Mode",
       type: "select",
+      icon: Monitor,
       placeholder: "Select work mode",
       options: ["On-site", "Remote", "Hybrid"],
       required: true,
@@ -50,6 +62,7 @@ export default function PostJob({ onPostJob }) {
       name: "location",
       label: "Job Location",
       type: "text",
+      icon: MapPin,
       placeholder: "e.g. Lahore, Pakistan",
       required: true,
     },
@@ -57,6 +70,7 @@ export default function PostJob({ onPostJob }) {
       name: "vacancies",
       label: "Number of Positions",
       type: "number",
+      icon: Users,
       placeholder: "e.g. 2",
       required: true,
     },
@@ -64,6 +78,7 @@ export default function PostJob({ onPostJob }) {
       name: "experience",
       label: "Experience Required",
       type: "select",
+      icon: Clock3,
       placeholder: "Select experience level",
       options: [
         "Fresh Graduate",
@@ -79,6 +94,7 @@ export default function PostJob({ onPostJob }) {
       name: "qualification",
       label: "Required Qualification",
       type: "select",
+      icon: GraduationCap,
       placeholder: "Select qualification",
       options: [
         "Intermediate",
@@ -94,17 +110,42 @@ export default function PostJob({ onPostJob }) {
       name: "salary",
       label: "Salary Range",
       type: "text",
+      icon: Banknote,
       placeholder: "e.g. 50,000 - 80,000 PKR",
       optional: true,
     },
+
+    // Application Deadline
+    // Custom render avoids shared FormLayout's future-date restriction.
     {
       name: "deadline",
       label: "Application Deadline",
-      type: "date",
+      type: "text",
       required: true,
+
+      render: ({ label, error, value, setValue }) => (
+        <FieldShell label={label} error={error}>
+          <span className="relative block">
+            <CalendarDays
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-brand-500"
+            />
+
+            <input
+              type="date"
+              value={value || ""}
+              onChange={(e) => setValue(e.target.value)}
+              aria-invalid={Boolean(error)}
+              className={`${inputBase} pl-11 pr-4 ${
+                error ? inputError : inputOk
+              }`}
+            />
+          </span>
+        </FieldShell>
+      ),
     },
 
-    // Required Skills - Interactive skill chips
+    // Required Skills
     {
       name: "skills",
       label: "Required Skills",
@@ -119,96 +160,92 @@ export default function PostJob({ onPostJob }) {
         const addSkill = () => {
           const newSkill = skillInput.trim();
 
+          // Empty skill add nahi hogi
           if (!newSkill) return;
 
+          // Duplicate skills allow nahi hongi
           const alreadyExists = value.some(
-            (skill) => skill.toLowerCase() === newSkill.toLowerCase()
+            (skill) =>
+              skill.toLowerCase() === newSkill.toLowerCase()
           );
 
-          if (alreadyExists) return;
+          if (alreadyExists) {
+            setSkillInput("");
+            return;
+          }
 
           setValue([...value, newSkill]);
           setSkillInput("");
         };
 
         const removeSkill = (skillToRemove) => {
-          setValue(value.filter((skill) => skill !== skillToRemove));
+          setValue(
+            value.filter((skill) => skill !== skillToRemove)
+          );
         };
 
         return (
-          <div>
-            <label
-              htmlFor="required-skills"
-              className="mb-2 block text-sm font-semibold text-slate-800"
-            >
-              {label}
-            </label>
+          <FieldShell label={label} error={error}>
+            <div className="w-full space-y-3">
 
-            <div className="flex gap-2">
-              <input
-                id="required-skills"
-                type="text"
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addSkill();
-                  }
-                }}
-                placeholder="Type a skill, e.g. React"
-                className={`w-full rounded-2xl border bg-stone-50 px-4 py-3.5 text-sm font-medium text-slate-800 placeholder:text-stone-400 outline-none transition-colors focus:bg-white ${
-                  error
-                    ? "border-brand-300"
-                    : "border-stone-200 focus:border-brand-400"
-                }`}
-              />
+              {/* Same shared input styling */}
+              <div className="relative block">
+                <Code2
+                  size={18}
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-brand-500"
+                />
 
-              <button
-                type="button"
-                onClick={addSkill}
-                disabled={!skillInput.trim()}
-                className="flex shrink-0 items-center gap-1.5 rounded-xl bg-brand-500 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-brand-600"
-              >
-                <Plus size={18} />
-                Add
-              </button>
-            </div>
+                <input
+                  type="text"
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addSkill();
+                    }
+                  }}
+                  placeholder="e.g. React, JavaScript, Node.js"
+                  className={`${inputBase} pl-11 pr-24 ${
+                    error ? inputError : inputOk
+                  }`}
+                />
 
-            {value.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {value.map((skill) => (
-                  <span
-                    key={skill}
-                    className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-700"
-                  >
-                    {skill}
-
-                    <button
-                      type="button"
-                      onClick={() => removeSkill(skill)}
-                      aria-label={`Remove ${skill}`}
-                      className="rounded-full transition-colors hover:text-red-600"
-                    >
-                      <X size={15} />
-                    </button>
-                  </span>
-                ))}
+                {/* Add button inside input */}
+                <button
+                  type="button"
+                  onClick={addSkill}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center gap-1.5 rounded-xl bg-brand-500 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
+                >
+                  <Plus size={15} />
+                  Add
+                </button>
               </div>
-            )}
 
-            {value.length === 0 && (
-              <p className="mt-2 text-xs text-stone-400">
-                Add all skills required for this job. You can add multiple skills.
-              </p>
-            )}
+              {/* Added skill chips */}
+              {value.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {value.map((skill) => (
+                    <span
+                      key={skill}
+                      className="inline-flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-700"
+                    >
+                      {skill}
 
-            {error && (
-              <p className="mt-2 text-sm font-semibold text-brand-700">
-                {error}
-              </p>
-            )}
-          </div>
+                      <button
+                        type="button"
+                        onClick={() => removeSkill(skill)}
+                        className="text-brand-600 transition-colors hover:text-brand-800"
+                        aria-label={`Remove ${skill}`}
+                      >
+                        <X size={15} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </FieldShell>
         );
       },
     },
@@ -217,25 +254,86 @@ export default function PostJob({ onPostJob }) {
       name: "description",
       label: "Job Description",
       type: "textarea",
-      placeholder: "Describe the job responsibilities and requirements...",
+      placeholder:
+        "Describe the job responsibilities and requirements...",
       rows: 5,
       minLength: 20,
       required: true,
+      full: true,
     },
   ];
 
-  const handleSubmit = (values) => {
-  console.log("New Job Details:", values);
-  console.log("Required Skills:", values.skills);
+  // Submit job to backend
+  const handleSubmit = async (values) => {
+    if (isSubmitting) return;
 
-  onPostJob?.(values);
-};
+    setSuccess("");
+    setError("");
+
+    const token =
+      localStorage.getItem("careerFluxToken") ||
+      sessionStorage.getItem("careerFluxToken");
+
+    if (!token) {
+      setError(
+        "Please login as an employer before publishing a job."
+      );
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await fetch(
+        "http://localhost:5000/api/jobs",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(values),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to publish job."
+        );
+      }
+
+      setSuccess(
+        data.message || "Job published successfully!"
+      );
+
+      console.log("Saved Job:", data.job);
+
+      onPostJob?.(data.job);
+    } catch (err) {
+      console.error("Job Publishing Error:", err);
+
+      setError(
+        err.message || "Something went wrong."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
+
       {success && (
-        <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-          <CheckCircle2 size={20} />
+        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
           {success}
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
+          {error}
         </div>
       )}
 
@@ -247,7 +345,9 @@ export default function PostJob({ onPostJob }) {
         fields={fields}
         initialValues={{ skills: [] }}
         onSubmit={handleSubmit}
+        columns={2}
       />
+
     </div>
   );
 }
