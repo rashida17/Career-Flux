@@ -5,7 +5,6 @@ import {
   Mail,
   BriefcaseBusiness,
   Flag,
-  MessageSquare,
 } from "lucide-react";
 
 import ConfigForm from "../components/FormLayout";
@@ -18,6 +17,7 @@ const fields = [
     type: "text",
     icon: UserRound,
     placeholder: "Enter job seeker's full name",
+    required: true,
   },
   {
     name: "jobSeekerEmail",
@@ -25,6 +25,7 @@ const fields = [
     type: "email",
     icon: Mail,
     placeholder: "Enter registered email address",
+    required: true,
   },
   {
     name: "jobTitle",
@@ -32,6 +33,7 @@ const fields = [
     type: "text",
     icon: BriefcaseBusiness,
     placeholder: "Enter job title",
+    required: true,
   },
   {
     name: "category",
@@ -48,14 +50,7 @@ const fields = [
       "Spam or Fake Applications",
       "Other",
     ],
-  },
-  {
-    name: "subject",
-    label: "Complaint Subject",
-    type: "text",
-    icon: MessageSquare,
-    placeholder: "Enter complaint subject",
-    minLength: 5,
+    required: true,
   },
   {
     name: "description",
@@ -65,6 +60,7 @@ const fields = [
     rows: 5,
     maxLength: 1000,
     minLength: 20,
+    required: true,
   },
   {
     name: "evidence",
@@ -98,7 +94,8 @@ export default function ReportsComplaints() {
         title="Submit a Complaint"
         description="Provide the job seeker's details and explain the issue. Our admin team will review your complaint."
         submitLabel="Submit Complaint"
-       submitPlacement="header"
+        submitPlacement="header"
+        columns={2}
         fields={fields}
         onSubmit={handleSubmit}
       />

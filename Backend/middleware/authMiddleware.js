@@ -44,3 +44,14 @@ export function adminOnly(req, res, next) {
 
   next();
 }
+
+// Allow only employers
+export function employerOnly(req, res, next) {
+  if (!req.user || req.user.role !== "employer") {
+    return res.status(403).json({
+      message: "Access denied. Employers only.",
+    });
+  }
+
+  next();
+}
