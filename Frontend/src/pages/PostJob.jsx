@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   BriefcaseBusiness,
@@ -14,9 +13,8 @@ import {
   X,
 } from "lucide-react";
 
-import ConfigForm, {
-  FieldShell,
-} from "../components/FormLayout";
+import ConfigForm from "../components/FormLayout";
+import { FieldShell } from "../components/FormFields";
 
 const inputBase =
   "w-full rounded-2xl border bg-stone-50 py-3.5 text-sm font-medium text-slate-800 " +
@@ -165,8 +163,7 @@ export default function PostJob({ onPostJob }) {
 
           // Duplicate skills allow nahi hongi
           const alreadyExists = value.some(
-            (skill) =>
-              skill.toLowerCase() === newSkill.toLowerCase()
+            (skill) => skill.toLowerCase() === newSkill.toLowerCase(),
           );
 
           if (alreadyExists) {
@@ -179,15 +176,12 @@ export default function PostJob({ onPostJob }) {
         };
 
         const removeSkill = (skillToRemove) => {
-          setValue(
-            value.filter((skill) => skill !== skillToRemove)
-          );
+          setValue(value.filter((skill) => skill !== skillToRemove));
         };
 
         return (
           <FieldShell label={label} error={error}>
             <div className="w-full space-y-3">
-
               {/* Same shared input styling */}
               <div className="relative block">
                 <Code2
@@ -254,8 +248,7 @@ export default function PostJob({ onPostJob }) {
       name: "description",
       label: "Job Description",
       type: "textarea",
-      placeholder:
-        "Describe the job responsibilities and requirements...",
+      placeholder: "Describe the job responsibilities and requirements...",
       rows: 5,
       minLength: 20,
       required: true,
@@ -275,38 +268,29 @@ export default function PostJob({ onPostJob }) {
       sessionStorage.getItem("careerFluxToken");
 
     if (!token) {
-      setError(
-        "Please login as an employer before publishing a job."
-      );
+      setError("Please login as an employer before publishing a job.");
       return;
     }
 
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(
-        "http://localhost:5000/api/jobs",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(values),
-        }
-      );
+      const response = await fetch("http://localhost:5000/api/jobs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(values),
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || "Failed to publish job."
-        );
+        throw new Error(data.message || "Failed to publish job.");
       }
 
-      setSuccess(
-        data.message || "Job published successfully!"
-      );
+      setSuccess(data.message || "Job published successfully!");
 
       console.log("Saved Job:", data.job);
 
@@ -314,9 +298,7 @@ export default function PostJob({ onPostJob }) {
     } catch (err) {
       console.error("Job Publishing Error:", err);
 
-      setError(
-        err.message || "Something went wrong."
-      );
+      setError(err.message || "Something went wrong.");
     } finally {
       setIsSubmitting(false);
     }
@@ -324,7 +306,6 @@ export default function PostJob({ onPostJob }) {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6">
-
       {success && (
         <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
           {success}
@@ -347,7 +328,6 @@ export default function PostJob({ onPostJob }) {
         onSubmit={handleSubmit}
         columns={2}
       />
-
     </div>
   );
 }

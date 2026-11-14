@@ -13,7 +13,6 @@ const toTime = (value) => {
 
 /**
  * Props
- *  - applicants: array of applicants (same shape the dashboard already uses)
  *  - onStatusChange(applicant, newStatus): same handler the dashboard passes to ApplicantCard
  */
 export default function AllApplications({ applicants = [], onStatusChange }) {

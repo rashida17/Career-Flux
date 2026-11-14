@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import {
-  ArrowRight, Briefcase, Building2, CalendarDays, Globe, Home, Landmark, Mail, MapPin, Phone, Users,
+  ArrowRight, Building, Building2, Calendar, Factory, Globe, Landmark, Mail, MapPin, Phone, Users,
 } from "lucide-react";
 import FormLayout from "../components/FormLayout";
 
@@ -13,7 +13,7 @@ const fields = [
   },
   { name: "companyName", label: "Company Name", icon: Building2, placeholder: "e.g. TechCorp Solutions Inc.", autoComplete: "organization" },
   {
-    name: "establishedDate", label: "Date Established", type: "date", icon: CalendarDays,
+    name: "establishedDate", label: "Date Established", type: "date", icon: Calendar,
     requiredMessage: "Please select the date your company was established.",
     invalidMessage: "The established date cannot be in the future.",
   },
@@ -26,7 +26,7 @@ const fields = [
     options: ["1 - 10 Employees", "11 - 50 Employees", "51 - 200 Employees", "201 - 500 Employees", "501 - 1000 Employees", "1000+ Employees"],
   },
   {
-    name: "industry", label: "Industry Sector", type: "select", icon: Briefcase, placeholder: "Select industry",
+    name: "industry", label: "Industry Sector", type: "select", icon: Factory, placeholder: "Select industry",
     options: [
       "Information Technology", "Software & Cloud", "Banking & Finance", "Healthcare", "Education",
       "Manufacturing", "Retail & E-commerce", "Telecommunications", "Construction & Real Estate",
@@ -36,7 +36,7 @@ const fields = [
   // { name: "department", label: "Department", icon: Layers, placeholder: "e.g. Human Resources" },
     { name: "website", label: "Company Website URL", type: "url", icon: Globe, placeholder: "https://yourcompany.com", optional: true },
   { name: "location", label: "Location", icon: MapPin, placeholder: "City, Country" },
-  { name: "address", label: "Office Address", icon: Home, placeholder: "Street, building, area", optional: true, autoComplete: "street-address" },
+  { name: "address", label: "Office Address", icon: Building, placeholder: "Street, building, area", optional: true, autoComplete: "street-address" },
   { name: "contactEmail", label: "Company Contact Email", type: "email", icon: Mail, placeholder: "hr@yourcompany.com", autoComplete: "email" },
   { name: "contactPhone", label: "Company Phone Number", type: "tel", icon: Phone, placeholder: "+92 300 1234567", autoComplete: "tel" },
   {
