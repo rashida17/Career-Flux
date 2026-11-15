@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Briefcase, Mail, Phone, User } from "lucide-react";
 import FormLayout from "../components/FormLayout";
 
@@ -13,7 +13,7 @@ const fields = [
 function PhotoUpload({ photo, setPhoto }) {
   const fileRef = useRef(null);
   const [error, setError] = useState("");
-
+  const preview = useMemo(() => (photo instanceof File ? URL.createObjectURL(photo) : photo), [photo]);
   const handlePhoto = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -21,7 +21,7 @@ function PhotoUpload({ photo, setPhoto }) {
       else if (file.size > 2 * 1024 * 1024) setError("Image must be 2MB or smaller.");
       else {
         setError("");
-        setPhoto(URL.createObjectURL(file));
+        setPhoto(file);
       }
     }
     e.target.value = "";
@@ -30,8 +30,8 @@ function PhotoUpload({ photo, setPhoto }) {
   return (
     <div className="flex items-center gap-5">
       <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-brand-200 bg-brand-50">
-        {photo ? (
-          <img src={photo} alt="Profile" className="h-full w-full object-cover" />
+        {preview ? (
+          <img src={preview} alt="Profile" className="h-full w-full object-cover" />
         ) : (
           <User size={44} strokeWidth={1.75} className="text-brand-400" aria-label="Default profile icon" />
         )}
@@ -43,19 +43,8 @@ function PhotoUpload({ photo, setPhoto }) {
             onClick={() => fileRef.current?.click()}
             className="rounded-xl bg-stone-100 px-4 py-2.5 text-sm font-bold text-slate-800 transition-colors hover:bg-brand-50 hover:text-brand-600"
           >
-            {photo ? "Change Photo" : "Upload Photo"}
+            {preview ? "Change Photo" : "Upload Photo"}
           </button>
-          {/* {photo && (
-            <button
-              type="button"
-              onClick={() => { setPhoto(""); setError(""); }}
-              className="rounded-xl px-3 py-2.5 
-              text-sm font-semibold text-brand-600 transition-colors 
-              hover:bg-brand-50"
-            >
-              Remove
-            </button>
-          )} */}
         </div>
         <input ref={fileRef} type="file" accept="image/png,image/jpeg" onChange={handlePhoto} className="hidden" />
         <p className="mt-2 text-xs text-stone-400">Optional. PNG, JPG up to 2MB</p>

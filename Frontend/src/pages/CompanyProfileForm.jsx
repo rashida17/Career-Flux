@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ArrowRight, Building, Building2, Calendar, Factory, Globe, Landmark, Mail, MapPin, Phone, Users,
 } from "lucide-react";
@@ -53,7 +53,7 @@ const fields = [
 function LogoUpload({ label, logo, setLogo, error: requiredError }) {
   const fileRef = useRef(null);
   const [error, setError] = useState("");
-
+  const preview = useMemo(() => (logo instanceof File ? URL.createObjectURL(logo) : logo), [logo]);
   const handleLogo = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -61,7 +61,7 @@ function LogoUpload({ label, logo, setLogo, error: requiredError }) {
       else if (file.size > 2 * 1024 * 1024) setError("Image must be 2MB or smaller.");
       else {
         setError("");
-        setLogo(URL.createObjectURL(file));
+       setLogo(file);
       }
     }
     e.target.value = "";
@@ -70,8 +70,8 @@ function LogoUpload({ label, logo, setLogo, error: requiredError }) {
   return (
     <div className="flex items-center gap-5">
       <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-brand-200 bg-brand-50">
-        {logo ? (
-          <img src={logo} alt="Company logo" className="h-full w-full object-cover" />
+        {preview? (
+          <img src={preview} alt="Company logo" className="h-full w-full object-cover" />
         ) : (
           <Building2 size={44} strokeWidth={1.75} className="text-brand-400" aria-label="Default company logo icon" />
         )}
@@ -84,7 +84,7 @@ function LogoUpload({ label, logo, setLogo, error: requiredError }) {
             onClick={() => fileRef.current?.click()}
             className="rounded-xl bg-stone-100 px-4 py-2.5 text-sm font-bold text-slate-800 transition-colors hover:bg-brand-50 hover:text-brand-600"
           >
-            {logo ? "Change Logo" : "Upload Logo"}
+            {preview ? "Change Logo" : "Upload Logo"}
           </button>
           {/* {logo && (
             <button

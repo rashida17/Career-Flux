@@ -1,4 +1,5 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { getPublicCompany } from "../api/profile";
 import {
   FaLocationDot,
   FaUsers,
@@ -11,7 +12,7 @@ import {
   FaCalendar,
   FaBuilding,
   FaLandmark,
-  FaUser, // [CHANGE 15] FaGithub removed, FaLandmark added  [CHANGE 16] FaUser added
+  FaUser, 
   FaMoneyBillWave,
   FaRegClock,
   FaArrowRight,
@@ -92,122 +93,8 @@ function JobCard({ job, company, onView }) {
 }
 
 /*  Data (replace with  API response)  */
-const sampleCompany = {
-  name: "Skyline Digital",
-  logoUrl: "", // e.g. "https://cdn.yoursite.com/logos/skyline.png"
-  coverUrl:
-    "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&auto=format&fit=crop&q=80",
-  location: "Karachi, Pakistan",
-  size: "180+ team members",
-  since: "Since 2014",
-  website: "skylinedigital.com",
-  sector: "Product Design & Engineering",
-  hq: "Suite 400, Karachi Lahore",
-  employees: "180+ Employees",
-  address: "Market Street, Suite 400, Karachi Lahore",
-  totalOpenRoles: 142,
-  // [CHANGE 14/15 START] new fields
-  isVerified: true,
-  ownership: "Private Limited",
-  contactEmail: "hr@skylinedigital.com",
-  contactPhone: "+92 300 7654321",
-  // [CHANGE 14/15 END]
-  about: [
-    "Skyline Digital is a multidisciplinary digital experience studio building immersive product experiences for finance, ecommerce, and emerging technology brands. We combine research-led design with battle-tested engineering to launch products that scale across millions of global users.",
-    "Our teams operate with a maker-first culture: weekly design critiques, shared ownership of product roadmaps, and dedicated space to iterate rapidly so we can keep pushing what digital experiences can be.",
-  ],
-  recruiter: {
-    name: "Ahmed Ali",
-    role: "Lead Technical Recruiter",
-    email: "ahmed@skylinedigital.com",
-    phone: "+92 300 1234567",
-    avatar:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
-  },
-};
 
-const sampleJobs = [
-  {
-    id: 1,
-    title: "Frontend Developer",
-    salary: "$80k - $100k/yr",
-    level: "Mid-Senior",
-    posted: "1d ago",
-    location: "Remote • USA",
-    badges: [
-      { label: "Urgent", tone: "red" },
-      { label: "Full time", tone: "slate" },
-      { label: "Remote", tone: "green" },
-    ],
-  },
-  {
-    id: 2,
-    title: "Digital Marketing Intern",
-    salary: "PKR 25k - 40k/mo",
-    level: "Entry Level",
-    posted: "1d ago",
-    location: "Karachi, PK",
-    badges: [
-      { label: "Urgent", tone: "red" },
-      { label: "Internship", tone: "slate" },
-      { label: "On-site", tone: "blue" },
-    ],
-  },
-  {
-    id: 3,
-    title: "UI/UX Product Designer",
-    salary: "PKR 150k - 200k/mo",
-    level: "Mid Level",
-    posted: "2d ago",
-    location: "Lahore, PK",
-    badges: [
-      { label: "Featured", tone: "amber" },
-      { label: "Full time", tone: "slate" },
-      { label: "On-site", tone: "blue" },
-    ],
-  },
-  {
-    id: 4,
-    title: "Web Development Intern",
-    salary: "PKR 30k - 45k/mo",
-    level: "Entry Level",
-    posted: "2d ago",
-    location: "Remote • Pakistan",
-    badges: [
-      { label: "New", tone: "blue" },
-      { label: "Internship", tone: "slate" },
-      { label: "Remote", tone: "green" },
-    ],
-  },
-];
 
-/*  Turns the saved form values from the dashboard into the shape this page renders */
-export const buildCompanyProfile = (c = {}, e = {}, isVerified = false) => ({
-  name: c.companyName || "Your Company",
-  category: c.industry || "",
-  logoUrl: c.logo || "",
-  coverUrl: c.cover || "",
-  location: c.location || "",
-  size: c.size || "",
-  employees: c.size || "",
-  since: c.establishedDate ? `Since ${c.establishedDate.slice(0, 4)}` : "",
-  website: (c.website || "").replace(/^https?:\/\//i, "").replace(/\/$/, ""),
-  sector: c.industry || "",
-  ownership: c.ownership || "",
-  hq: c.location || "",
-  address: c.address || "",
-  contactEmail: c.contactEmail || "",
-  contactPhone: c.contactPhone || "",
-  isVerified,
-  about: (c.bio || "").split(/\n+/).filter(Boolean),
-  recruiter: {
-    name: e.fullName || "Hiring Manager",
-    role: e.jobTitle || "Employer",
-    email: e.email || "",
-    phone: e.phone || "",
-    avatar: e.photo || "",
-  },
-});
 const SnapshotRow = ({ icon: Icon, label, children, first }) => (
   <div className={`${first ? "pt-1" : "pt-3"} flex items-start space-x-3`}>
     <Icon className="text-brand-500 mt-0.5 text-sm w-4 shrink-0" />
@@ -222,14 +109,23 @@ const Val = ({ children }) => (
   <span className="text-slate-600 font-medium">{children}</span>
 );
 
-export default function CompanyProfile({
-  company = sampleCompany,
-  jobs = sampleJobs,
-  onViewJob,
-  onBack,
-}) {
-  // [CHANGE 16]
+export default function CompanyProfile({ companyId, onViewJob }) {
   const jobsRef = useRef(null);
+  const [state, setState] = useState({ loading: true, error: "", company: null, jobs: [] });
+
+  useEffect(() => {
+    let alive = true;
+    setState((s) => ({ ...s, loading: true }));
+    getPublicCompany(companyId)
+      .then((d) => alive && setState({ loading: false, error: "", company: d.company, jobs: d.jobs }))
+      .catch((e) => alive && setState({ loading: false, error: e.message, company: null, jobs: [] }));
+    return () => { alive = false; };
+  }, [companyId]);
+
+  if (state.loading) return <p className="py-20 text-center text-sm text-slate-500">Loading company profile...</p>;
+  if (state.error) return <p className="py-20 text-center text-sm font-semibold text-brand-700">{state.error}</p>;
+
+  const { company, jobs } = state;
 
   return (
     <div className="space-y-6 text-slate-900">
