@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-
 // Animation keyframes (kept inside this file, prefixed "auth" so they never clash with other CSS)
 const AUTH_KEYFRAMES = `
 @keyframes authSpin { to { transform: rotate(360deg); } }
@@ -10,7 +9,6 @@ const AUTH_KEYFRAMES = `
 @keyframes authIconIn { from { opacity: 0; transform: scale(0.5) rotate(-25deg); } to { opacity: 1; transform: none; } }
 @keyframes authFadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 `;
-
 // Icons
 export const Svg = ({
   size = 17,
@@ -83,16 +81,7 @@ export const ChartIcon = () => (
     <path d="M7 15l4-4 3 3 5-6" />
   </Svg>
 );
-// export const GoogleIcon = () => (
-//   <svg width="17" height="17" viewBox="0 0 48 48" aria-hidden="true">
-//     <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.7 2.5 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6C12.3 13.5 17.6 9.5 24 9.5z" />
-//     <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z" />
-//     <path fill="#FBBC05" d="M10.4 28.8A14.5 14.5 0 019.5 24c0-1.7.3-3.3.9-4.8l-7.8-6A24 24 0 000 24c0 3.9.9 7.5 2.6 10.8l7.8-6z" />
-//     <path fill="#34A853" d="M24 48c6.2 0 11.5-2 15.3-5.6l-7.6-5.9c-2.1 1.4-4.8 2.3-7.7 2.3-6.4 0-11.7-4-13.6-9.8l-7.8 6C6.5 42.600 14.6 48 24 48z" />
-//   </svg>
-// );
 
-// Icons for animated side
 export const BIG_ICONS = {
   globe: (
     <Svg size={34}>
@@ -155,16 +144,6 @@ export function Field({ icon, password = false, ...inputProps }) {
   );
 }
 
-// export const GoogleButton = () => (
-//   <button type="button" className="flex min-h-[44px] w-full items-center justify-center gap-2.5 rounded-xl border border-stone-200 bg-stone-50 text-sm font-semibold text-slate-800 transition hover:border-brand-300 hover:bg-white sm:rounded-2xl">
-//     <GoogleIcon /> Google
-//   </button>
-// );
-
-// export const Divider = ({ children }) => (
-//   <div className="my-3 flex items-center gap-3 text-xs font-semibold text-stone-500 before:h-px before:flex-1 before:bg-stone-200 after:h-px after:flex-1 after:bg-stone-200">{children}</div>
-// );
-
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export function GoogleButton({ onCredential, text = "signup_with" }) {
@@ -225,7 +204,6 @@ export const SubmitButton = ({ children }) => (
     {children} <ArrowIcon />
   </button>
 );
-
 // Animated side
 function AuthShowcase({ badge, slides }) {
   const [slide, setSlide] = useState(0);

@@ -90,7 +90,12 @@ export default function SignUp() {
     );
 
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: "", password: "", confirm: "", otp: "" });
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+    confirm: "",
+    otp: "",
+  });
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
@@ -143,7 +148,10 @@ export default function SignUp() {
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.message || "Something went wrong. Please try again.");
+    if (!res.ok)
+      throw new Error(
+        data.message || "Something went wrong. Please try again.",
+      );
     return data;
   };
   const friendly = (err) =>
@@ -158,7 +166,9 @@ export default function SignUp() {
     localStorage.removeItem("user");
     window.dispatchEvent(new Event("careerFluxAuthChange"));
     navigate(
-      data.user.role === "employer" ? "/employerdashboard" : "/jobseekerdashboard",
+      data.user.role === "employer"
+        ? "/employerdashboard"
+        : "/jobseekerdashboard",
     );
   };
 
@@ -175,7 +185,9 @@ export default function SignUp() {
       setOtpSent(true);
       setForm((f) => ({ ...f, otp: "" }));
       setCooldown(RESEND_SECONDS);
-      setInfo(`We sent a 6-digit code to ${form.email.trim()}. It expires in 10 minutes.`);
+      setInfo(
+        `We sent a 6-digit code to ${form.email.trim()}. It expires in 10 minutes.`,
+      );
     } catch (err) {
       setError(friendly(err));
     } finally {
@@ -220,7 +232,8 @@ export default function SignUp() {
 
     setPwTouched(true);
     if (problems.length) return;
-    if (form.password !== form.confirm) return setError("Passwords do not match.");
+    if (form.password !== form.confirm)
+      return setError("Passwords do not match.");
 
     setError("");
     setLoading(true);
@@ -241,7 +254,7 @@ export default function SignUp() {
     }
   };
 
-    // same look as <SubmitButton>, but it can run an onClick and be disabled
+  // same look as <SubmitButton>, but it can run an onClick and be disabled
   const sendBtnLabel = sending
     ? "Sending..."
     : cooldown > 0

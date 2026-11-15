@@ -1,24 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import {
   AlertCircle,
-  ArrowRight,
-  Briefcase,
-  Check,
   CheckCircle2,
-  ChevronDown,
-  Clock,
-  MapPin,
   Plus,
   Search,
-  Send,
   SlidersHorizontal,
   Sparkles,
-  UserRound,
   UserX,
   X,
-  XCircle,
 } from "lucide-react";
+import CandidateCard from "../components/CandidateCard";
+import CandidateFilterSelect from "../components/CandidateFilterSelect";
+import CandidateInvitationModal from "../components/CandidateInvitationModal";
 
 /* SAMPLE DATA (replace with your API response)*/
 const initialCandidates = [
@@ -104,328 +97,6 @@ const LOCATION_OPTIONS = [
   "Islamabad, Pakistan",
 ];
 
-// Open jobs of this employer (later replace with  API data)
-const OPEN_JOBS = [
-  "Frontend Developer (TypeScript)",
-  "MERN Stack Engineer",
-  "UI/UX Product Designer",
-];
-
-const DEFAULT_NOTE =
-  "We reviewed your profile on CareerFlux and found a strong match with our team requirements. We invite you to apply!";
-
-/* SMALL PIECES */
-const statusStyles = {
-  none: {
-    label: "Not Contacted",
-    className: "bg-stone-100 text-slate-500 border-stone-200",
-    icon: null,
-  },
-  pending: {
-    label: "Invite Sent (Pending)",
-    className: "bg-brand-100 text-brand-800 border-brand-200",
-    icon: Clock,
-  },
-  accepted: {
-    label: "Invite Accepted",
-    className: "bg-brand-500 text-white border-brand-500",
-    icon: CheckCircle2,
-  },
-  declined: {
-    label: "Invite Declined",
-    className: "bg-brand-900 text-brand-50 border-brand-900",
-    icon: XCircle,
-  },
-};
-
-/* Real photo, or the default user icon when there is no photo / it fails to load */
-function Avatar({ image, name, className = "h-11 w-11" }) {
-  const [failed, setFailed] = useState(false);
-
-  if (image && !failed) {
-    return (
-      <img
-        src={image}
-        alt={name}
-        onError={() => setFailed(true)}
-        className={`${className} shrink-0 rounded-xl border border-brand-100 object-cover`}
-      />
-    );
-  }
-
-  return (
-    <div
-      aria-label={`${name} (no photo)`}
-      className={`${className} flex shrink-0 items-center justify-center rounded-xl border border-brand-200 bg-brand-50 text-brand-500`}
-    >
-      <UserRound size={20} />
-    </div>
-  );
-}
-
-function StatusBadge({ status }) {
-  const { label, className, icon: Icon } = statusStyles[status] ?? statusStyles.none;
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[10px] font-bold ${className}`}
-    >
-      {Icon && <Icon size={12} />}
-      {label}
-    </span>
-  );
-}
-
-function FilterSelect({ label, value, onChange, placeholder, options }) {
-  return (
-    <div className="space-y-1">
-      <label className="block text-xs font-bold text-slate-700">{label}</label>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full cursor-pointer appearance-none rounded-xl border border-stone-200 bg-cream px-3 py-2.5 pr-9 text-xs font-semibold text-slate-800 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-        >
-          <option value="">{placeholder}</option>
-          {options.map((opt) => {
-            const o = typeof opt === "string" ? { value: opt, label: opt } : opt;
-            return (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            );
-          })}
-        </select>
-        <ChevronDown
-          size={15}
-          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-        />
-      </div>
-    </div>
-  );
-}
-
-/* Candidate card: */
-function CandidateCard({ candidate, requiredSkills = [], onOpen, onInvite }) {
-  const handleKey = (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onOpen(candidate);
-    }
-  };
-
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => onOpen(candidate)}
-      onKeyDown={handleKey}
-      aria-label={`View profile of ${candidate.name}`}
-      className="group flex cursor-pointer flex-col justify-between space-y-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm outline-none transition hover:border-brand-500/40 focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-100"
-    >
-      <div className="space-y-3">
-        {/* Avatar, name, role, match badge */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-center space-x-3">
-            <Avatar image={candidate.image} name={candidate.name} />
-            <div className="min-w-0">
-              <h4 className="truncate text-sm font-bold text-slate-900 transition group-hover:text-brand-500">
-                {candidate.name}
-              </h4>
-              <p className="truncate text-[11px] text-slate-400">{candidate.role}</p>
-            </div>
-          </div>
-
-          {candidate.aiMatchScore ? (
-            <span className="shrink-0 rounded-lg border border-brand-200 bg-brand-100 px-2.5 py-0.5 text-[10px] font-bold text-brand-800">
-              {candidate.aiMatchScore}% Match
-            </span>
-          ) : null}
-        </div>
-
-        {/* Experience + location */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
-          <span className="flex items-center gap-1">
-            <Briefcase size={12} className="text-slate-400" /> {candidate.exp}
-          </span>
-          <span className="flex items-center gap-1">
-            <MapPin size={12} className="text-brand-500" /> {candidate.location}
-          </span>
-        </div>
-
-        {/* Skills: highlighted when they match a skill chosen in the filters */}
-        <div className="space-y-1.5">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Skills</p>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {candidate.skills.map((skill) => {
-              const isMatch = requiredSkills.some(
-                (r) => r.toLowerCase() === skill.toLowerCase()
-              );
-              return (
-                <span
-                  key={skill}
-                  className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-0.5 text-[10px] font-bold ${
-                    isMatch
-                      ? "border-brand-200 bg-brand-50 text-brand-700"
-                      : "border-stone-200 bg-stone-50 text-slate-600"
-                  }`}
-                >
-                  {isMatch && <Check size={10} />} {skill}
-                </span>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
-        <StatusBadge status={candidate.status} />
-
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation(); // don't open the profile
-            onInvite(candidate);
-          }}
-          className="flex shrink-0 items-center space-x-1 rounded-xl bg-brand-500 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-brand-600"
-        >
-          <Send size={12} />
-          <span>Invite</span>
-          {/* <ArrowRight size={11} /> */}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* INVITATION MODAL*/
-function InviteModal({ candidate, onClose, onSend }) {
-  const [job, setJob] = useState(OPEN_JOBS[0]);
-  const [deadline, setDeadline] = useState("2026-11-20");
-  const [note, setNote] = useState(DEFAULT_NOTE);
-
-  useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  const fieldClass =
-    "w-full rounded-xl border border-stone-200 bg-cream px-3 py-2.5 text-xs font-semibold text-slate-800 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100";
-
-  // lock page scroll while the popup is open
-  useEffect(() => {
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, []);
-
-  // Rendered in <body> so the dark overlay covers the sidebar and the whole page
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="invite-title"
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md space-y-4 rounded-2xl border border-stone-200 bg-white p-6 opacity-100 shadow-floating"
-      >
-        <div className="flex items-start justify-between border-b border-stone-100 pb-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-500">
-              <Send size={16} />
-            </div>
-            <div>
-              <h3 id="invite-title" className="text-sm font-bold text-slate-900">
-                Send Job Invitation
-              </h3>
-              <p className="text-[11px] text-slate-400">
-                Direct candidate notification via platform & email
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="text-slate-400 transition hover:text-slate-600"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="space-y-3 text-xs">
-          <div className="space-y-1 rounded-xl border border-stone-200 bg-cream p-3">
-            <div className="flex justify-between gap-3">
-              <span className="font-bold text-slate-400">Candidate:</span>
-              <span className="font-bold text-slate-900">{candidate.name}</span>
-            </div>
-            <div className="flex justify-between gap-3">
-              <span className="font-bold text-slate-400">Work Email:</span>
-              <span className="truncate font-bold text-brand-500">{candidate.email}</span>
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1 block font-bold text-slate-700">Select Open Job Listing</label>
-            <select value={job} onChange={(e) => setJob(e.target.value)} className={fieldClass}>
-              {OPEN_JOBS.map((j) => (
-                <option key={j} value={j}>
-                  {j}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="mb-1 block font-bold text-slate-700">Response Deadline Date</label>
-            <input
-              type="date"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              className={fieldClass}
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block font-bold text-slate-700">Custom Invitation Note</label>
-            <textarea
-              rows={3}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              className={`${fieldClass} font-medium`}
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-2 border-t border-stone-100 pt-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl bg-stone-100 px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-stone-200"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => onSend({ candidate, job, deadline, note })}
-            className="flex items-center gap-2 rounded-xl bg-brand-500 px-5 py-2 text-xs font-bold text-white transition hover:bg-brand-600"
-          >
-            <Send size={13} />
-            Send Invitation
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-}
-
 /* MAIN PAGE*/
 /**
  * Props
@@ -470,9 +141,13 @@ export default function SearchCandidates({ onViewProfile }) {
       const matchesLoc = !loc || c.location === loc;
       const matchesSkills =
         skills.length === 0 ||
-        skills.every((sk) => c.skills.some((s) => s.toLowerCase() === sk.toLowerCase()));
+        skills.every((sk) =>
+          c.skills.some((s) => s.toLowerCase() === sk.toLowerCase()),
+        );
 
-      return matchesQuery && matchesRole && matchesExp && matchesLoc && matchesSkills;
+      return (
+        matchesQuery && matchesRole && matchesExp && matchesLoc && matchesSkills
+      );
     });
   }, [candidates, query, role, exp, loc, skills]);
 
@@ -485,12 +160,14 @@ export default function SearchCandidates({ onViewProfile }) {
 
   const addSkill = () => {
     const value = skillInput.trim();
-    if (!value || skills.some((s) => s.toLowerCase() === value.toLowerCase())) return;
+    if (!value || skills.some((s) => s.toLowerCase() === value.toLowerCase()))
+      return;
     manual(setSkills)([...skills, value]);
     setSkillInput("");
   };
 
-  const removeSkill = (skill) => manual(setSkills)(skills.filter((s) => s !== skill));
+  const removeSkill = (skill) =>
+    manual(setSkills)(skills.filter((s) => s !== skill));
 
   const resetFilters = () => {
     setQuery("");
@@ -521,7 +198,7 @@ export default function SearchCandidates({ onViewProfile }) {
           if (c.location === loc) score += 5;
           return { ...c, aiMatchScore: Math.min(score, 98) };
         })
-        .sort((a, b) => b.aiMatchScore - a.aiMatchScore)
+        .sort((a, b) => b.aiMatchScore - a.aiMatchScore),
     );
     setAiRole(role);
     setAiActive(true);
@@ -532,10 +209,14 @@ export default function SearchCandidates({ onViewProfile }) {
   const sendInvitation = ({ candidate, deadline }) => {
     // call your backend API here
     setCandidates((current) =>
-      current.map((c) => (c.id === candidate.id ? { ...c, status: "pending" } : c))
+      current.map((c) =>
+        c.id === candidate.id ? { ...c, status: "pending" } : c,
+      ),
     );
     setInviteTarget(null);
-    notify(`Invitation sent to ${candidate.email}. Response deadline: ${deadline}.`);
+    notify(
+      `Invitation sent to ${candidate.email}. Response deadline: ${deadline}.`,
+    );
   };
 
   const openProfile = (candidate) => {
@@ -548,9 +229,12 @@ export default function SearchCandidates({ onViewProfile }) {
       {/* Title on the LEFT, search bar in the MIDDLE */}
       <div className="space-y-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">Search Candidates</h1>
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+            Search Candidates
+          </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Find job seekers by skills and experience, or use AI matching for your open jobs.
+            Find job seekers by skills and experience, or use AI matching for
+            your open jobs.
           </p>
         </div>
 
@@ -570,7 +254,9 @@ export default function SearchCandidates({ onViewProfile }) {
               type="button"
               title="Search candidates"
               aria-label="Search candidates"
-              onClick={() => notify(`Search executed. Found ${results.length} candidates.`)}
+              onClick={() =>
+                notify(`Search executed. Found ${results.length} candidates.`)
+              }
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-500 text-white transition hover:bg-brand-600"
             >
               <Search size={16} />
@@ -585,13 +271,16 @@ export default function SearchCandidates({ onViewProfile }) {
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-brand-500 p-4 text-white shadow-sm">
             <div className="flex items-center gap-2">
               <Sparkles size={16} />
-              <span className="text-xs font-bold">AI Recommendation Engine Active</span>
+              <span className="text-xs font-bold">
+                AI Recommendation Engine Active
+              </span>
             </div>
             <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold">
               {aiRole}
             </span>
             <p className="w-full text-[11px] text-brand-50">
-              Candidates are sorted by overall AI skill compatibility with your selected criteria.
+              Candidates are sorted by overall AI skill compatibility with your
+              selected criteria.
             </p>
           </div>
         )}
@@ -619,7 +308,9 @@ export default function SearchCandidates({ onViewProfile }) {
               <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-500">
                 <UserX size={18} />
               </div>
-              <h3 className="text-sm font-bold text-slate-900">No candidates match your query</h3>
+              <h3 className="text-sm font-bold text-slate-900">
+                No candidates match your query
+              </h3>
               <p className="text-xs text-slate-400">
                 Try adjusting your keyword search or clearing the filters.
               </p>
@@ -644,7 +335,9 @@ export default function SearchCandidates({ onViewProfile }) {
           <div className="space-y-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Browse By / Filters</h3>
+                <h3 className="text-sm font-bold text-slate-900">
+                  Browse By / Filters
+                </h3>
                 <p className="text-[10px] text-slate-400">
                   Optional for search, required for AI engine
                 </p>
@@ -664,26 +357,27 @@ export default function SearchCandidates({ onViewProfile }) {
                   Selection required for AI matching
                 </div>
                 <p className="text-[10px] leading-4 text-brand-600">
-                  Select a Target Role, Experience and Location to get AI recommendations.
+                  Select a Target Role, Experience and Location to get AI
+                  recommendations.
                 </p>
               </div>
             )}
 
-            <FilterSelect
+            <CandidateFilterSelect
               label="Target Role"
               value={role}
               onChange={manual(setRole)}
               placeholder="Select Target Role..."
               options={ROLE_OPTIONS}
             />
-            <FilterSelect
+            <CandidateFilterSelect
               label="Minimum Experience"
               value={exp}
               onChange={manual(setExp)}
               placeholder="Select Minimum Experience..."
               options={EXP_OPTIONS}
             />
-            <FilterSelect
+            <CandidateFilterSelect
               label="Location Preference"
               value={loc}
               onChange={manual(setLoc)}
@@ -693,7 +387,9 @@ export default function SearchCandidates({ onViewProfile }) {
 
             {/* Required skills */}
             <div className="space-y-2 border-t border-slate-100 pt-3">
-              <label className="block text-xs font-bold text-slate-700">Required Skills</label>
+              <label className="block text-xs font-bold text-slate-700">
+                Required Skills
+              </label>
               <div className="relative">
                 <input
                   type="text"
@@ -759,7 +455,7 @@ export default function SearchCandidates({ onViewProfile }) {
       </div>
 
       {inviteTarget && (
-        <InviteModal
+        <CandidateInvitationModal
           candidate={inviteTarget}
           onClose={() => setInviteTarget(null)}
           onSend={sendInvitation}

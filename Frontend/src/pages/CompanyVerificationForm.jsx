@@ -1,12 +1,24 @@
 import { useState } from "react";
 import { ArrowLeft, Clock, Globe, ShieldCheck } from "lucide-react";
 import FormLayout from "../components/FormLayout";
+import { ProfileProgress } from "../components/FormFields";
 
 const fields = [
-  { name: "website", label: "Company Website URL", type: "url", icon: Globe, placeholder: "https://yourcompany.com", full: true },
   {
-    name: "document", label: "Business Incorporation Doc / Tax Clearance (PDF)", type: "file",
-    accept: "application/pdf", typeLabel: "PDF", maxSizeMB: 5,
+    name: "website",
+    label: "Company Website URL",
+    type: "url",
+    icon: Globe,
+    placeholder: "https://yourcompany.com",
+    full: true,
+  },
+  {
+    name: "document",
+    label: "Business Incorporation Doc / Tax Clearance (PDF)",
+    type: "file",
+    accept: "application/pdf",
+    typeLabel: "PDF",
+    maxSizeMB: 5,
     requiredMessage: "Please upload your legal document as a PDF.",
   },
 ];
@@ -20,13 +32,14 @@ const centerWrapper =
   "[&_form>div:nth-child(2)]:mx-auto [&_form>div:nth-child(2)]:max-w-xl " +
   // button centred, auto width
   "[&_form>div:last-child]:flex [&_form>div:last-child]:justify-center " +
-  "[&_form>div:last-child>button]:w-xl [&_form>div:last-child>button]:px-10";
+  "[&_form>div:last-child>button]:w-full [&_form>div:last-child>button]:max-w-md [&_form>div:last-child>button]:px-6";
 
 export default function CompanyVerification({
   initialWebsite = "",
   status = "none", // "none" | "pending" | "verified"
   onSubmit,
   onBack,
+  completedSections,
 }) {
   const [submitted, setSubmitted] = useState(false);
   const isVerified = status === "verified";
@@ -35,13 +48,22 @@ export default function CompanyVerification({
   if (isVerified || isPending) {
     return (
       <div className="rounded-3xl border border-stone-200 bg-white p-6 sm:p-8">
-        <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">Employer Verification</h2>
+        <div className="flex items-start justify-between gap-4">
+          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
+            Employer Verification
+          </h2>
+          <ProfileProgress completedSections={completedSections} />
+        </div>
         <div className="mt-6 flex flex-col items-center rounded-2xl border border-stone-200 bg-stone-50 px-6 py-12 text-center">
-          <span className={`flex h-14 w-14 items-center justify-center rounded-full ${isVerified ? "bg-emerald-100 text-emerald-600" : "bg-brand-100 text-brand-600"}`}>
+          <span
+            className={`flex h-14 w-14 items-center justify-center rounded-full ${isVerified ? "bg-emerald-100 text-emerald-600" : "bg-brand-100 text-brand-600"}`}
+          >
             {isVerified ? <ShieldCheck size={28} /> : <Clock size={28} />}
           </span>
           <h3 className="mt-4 text-lg font-bold text-slate-900">
-            {isVerified ? "Your company is verified" : "Verification request submitted"}
+            {isVerified
+              ? "Your company is verified"
+              : "Verification request submitted"}
           </h3>
           <p className="mt-1 max-w-md text-sm text-stone-500">
             {isVerified
@@ -60,11 +82,15 @@ export default function CompanyVerification({
         description="Provide your company legal credentials to earn the official verified badge and join our trusted companies."
         submitLabel="Submit Verification Request"
         submitPlacement="bottom"
-         
+        bottomSubmitClassName="max-w-sm"
+        completedSections={completedSections}
         fields={fields}
         initialValues={{ website: initialWebsite }}
         onSubmit={(values) => {
-          onSubmit?.({ website: values.website.trim(), document: values.document });
+          onSubmit?.({
+            website: values.website.trim(),
+            document: values.document,
+          });
           setSubmitted(true);
         }}
         headerTop={

@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import DashboardOverview from "../components/DashboardOverview";
 import ApplicantCard from "../components/ApplicantCard";
-import EmployerProfileForm from "./EmployerProfileForm"; 
+import EmployerProfileForm from "./EmployerProfileForm";
 import CompanyProfileForm from "./CompanyProfileForm";
 import CompanyVerificationForm from "./CompanyVerificationForm";
 import CompanyProfile from "./CompanyProfile";
@@ -10,26 +10,29 @@ import PostJob from "./PostJob";
 import ReportsComplaints from "./ReportsComplaints";
 import MyPostedJobs from "./MyPostedJobs";
 import AllApplications from "./AllApplications";
-import SearchCandidates from "./SearchCandidate"
+import SearchCandidates from "./SearchCandidate";
+import {
+  getCompanyProfile,
+  saveCompanyProfile,
+  getEmployerProfile,
+  saveEmployerProfile,
+} from "../api/profile";
 import {
   ArrowUpRight,
   BriefcaseBusiness,
   Building2,
-  Check,
-  ChevronRight,
+  CheckCircle2,
   FileCheck2,
   FolderOpen,
   LayoutDashboard,
-  ListChecks,
   Plus,
   Search,
   Send,
   ShieldCheck,
   Users,
   UserRound,
-  X,
 } from "lucide-react";
- 
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -39,17 +42,11 @@ import {
   Filler,
   Tooltip,
 } from "chart.js";
- 
+
 import { Line } from "react-chartjs-2";
- 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Filler,
-  Tooltip
-);
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
+
 // SAMPLE APPLICATION DATA
 const initialApplicants = [
   {
@@ -60,8 +57,7 @@ const initialApplicants = [
     job: "Teaching Assistant",
     experience: "2+ Years",
     salary: "$800 / month",
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80",
     status: "New",
   },
   {
@@ -72,8 +68,7 @@ const initialApplicants = [
     job: "UI/UX Designer",
     experience: "2+ Years",
     salary: "$800 / month",
-    image:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80",
+    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80",
     status: "New",
   },
   {
@@ -84,8 +79,7 @@ const initialApplicants = [
     job: "Teaching Assistant",
     experience: "3+ Years",
     salary: "$800 / month",
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80",
     status: "New",
   },
 ];
@@ -108,23 +102,15 @@ const employerStats = [
   { title: "Total Candidate Invites", value: "18", note: "12 accepted", icon: Send },
   { title: "Total Posted Jobs", value: "12", note: "5 active · 7 closed", icon: FolderOpen },
 ];
- 
+
 // SECTION HEADING
 function SectionHeading({ title, subtitle, children }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h2 className="text-lg font-bold text-slate-900">
-          {title}
-        </h2>
- 
-        {subtitle && (
-          <p className="mt-1 text-sm text-slate-500">
-            {subtitle}
-          </p>
-        )}
+        <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+        {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
       </div>
- 
       {children}
     </div>
   );
@@ -133,22 +119,15 @@ function SectionHeading({ title, subtitle, children }) {
 function Step({ number, title, description, last = false }) {
   return (
     <div className="relative flex gap-3">
-      {!last && (
-        <div className="absolute bottom-0 left-[15px] top-9 w-px bg-stone-200" />
-      )}
- 
+      {!last && <div className="absolute bottom-0 left-[15px] top-9 w-px bg-stone-200" />}
+
       <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-brand-200 bg-brand-50 text-xs font-bold text-brand-600">
         {number}
       </div>
- 
+
       <div className="min-w-0 pb-5">
-        <h3 className="text-sm font-bold text-slate-800">
-          {title}
-        </h3>
- 
-        <p className="mt-1 text-xs leading-5 text-slate-500">
-          {description}
-        </p>
+        <h3 className="text-sm font-bold text-slate-800">{title}</h3>
+        <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
       </div>
     </div>
   );
@@ -174,7 +153,7 @@ function ApplicationsChart() {
       },
     ],
   };
- 
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -194,82 +173,53 @@ function ApplicationsChart() {
       y: {
         beginAtZero: true,
         max: 35,
-        ticks: {
-          stepSize: 5,
-          color: "#64748B",
-        },
+        ticks: { stepSize: 5, color: "#64748B" },
         grid: { color: "#F1F5F9" },
       },
     },
   };
- 
+
   return (
     <div className="h-64 w-full">
       <Line data={chartData} options={chartOptions} />
     </div>
   );
 }
- 
+
 function HiringFunnelCard() {
   const stages = [
-    {
-      label: "Applied",
-      count: 124,
-      percentage: 100,
-      barColor: "bg-brand-500",
-    },
-    {
-      label: "Shortlisted",
-      count: 42,
-      percentage: 34,
-      barColor: "bg-[#D66C58]",
-    },
-    {
-      label: "Hired",
-      count: 6,
-      percentage: 5,
-      barColor: "bg-emerald-500",
-    },
+    { label: "Applied", count: 124, percentage: 100, barColor: "bg-brand-500" },
+    { label: "Shortlisted", count: 42, percentage: 34, barColor: "bg-[#D66C58]" },
+    { label: "Hired", count: 6, percentage: 5, barColor: "bg-emerald-500" },
   ];
- 
+
   return (
     <div className="rounded-2xl border border-stone-200 bg-white p-6">
       <div className="mb-7 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-bold text-slate-900">
-            Hiring Funnel Breakdown
-          </h3>
-          <p className="mt-2 text-sm text-slate-500">
-            Conversion stages across open positions
-          </p>
+          <h3 className="text-lg font-bold text-slate-900">Hiring Funnel Breakdown</h3>
+          <p className="mt-2 text-sm text-slate-500">Conversion stages across open positions</p>
         </div>
- 
+
         <span className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-medium text-slate-700">
           Hiring Funnel
         </span>
       </div>
- 
+
       <div className="space-y-5">
         {stages.map((stage) => (
           <div key={stage.label}>
             <div className="mb-1.5 flex items-center justify-between gap-3">
-              <span className="text-sm font-semibold text-slate-700">
-                {stage.label}
-              </span>
- 
+              <span className="text-sm font-semibold text-slate-700">{stage.label}</span>
+
               <span className="text-sm font-bold tabular-nums text-slate-900">
                 {stage.count}
-                {stage.label !== "Applied" && (
-                  <span className="ml-1">({stage.percentage}%)</span>
-                )}
+                {stage.label !== "Applied" && <span className="ml-1">({stage.percentage}%)</span>}
               </span>
             </div>
- 
+
             <div className="h-4 overflow-hidden rounded-full bg-stone-100">
-              <div
-                className={`h-full rounded-full ${stage.barColor}`}
-                style={{ width: `${stage.percentage}%` }}
-              />
+              <div className={`h-full rounded-full ${stage.barColor}`} style={{ width: `${stage.percentage}%` }} />
             </div>
           </div>
         ))}
@@ -285,37 +235,31 @@ function CandidateInvitationGuide() {
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-500">
           <Send size={21} />
         </div>
- 
+
         <div>
-          <h2 className="text-base font-bold text-slate-900">
-            How candidate invitations work
-          </h2>
- 
+          <h2 className="text-base font-bold text-slate-900">How candidate invitations work</h2>
           <p className="mt-1 text-sm leading-5 text-slate-500">
             Connect with relevant candidates through CareerFlux.
           </p>
         </div>
       </div>
- 
+
       <div className="mt-6 flex-1">
         <Step
           number="1"
           title="Search for candidates"
           description="Explore candidate profiles and review their listed skills and experience."
         />
- 
         <Step
           number="2"
           title="Send an invitation"
           description="Notify a suitable candidate about an opportunity at your company."
         />
- 
         <Step
           number="3"
           title="Candidate responds"
           description="The candidate can review the opportunity and choose whether to apply."
         />
- 
         <Step
           number="4"
           title="Continue the hiring process"
@@ -323,7 +267,7 @@ function CandidateInvitationGuide() {
           last
         />
       </div>
- 
+
       <div className="mt-2 rounded-xl bg-brand-50 p-3">
         <p className="text-xs leading-5 text-slate-600">
           <span className="font-bold text-brand-700">Remember: </span>
@@ -341,37 +285,31 @@ function VerificationGuide() {
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-500">
           <ShieldCheck size={22} />
         </div>
- 
+
         <div>
-          <h2 className="text-base font-bold text-slate-900">
-            How company verification works
-          </h2>
- 
+          <h2 className="text-base font-bold text-slate-900">How company verification works</h2>
           <p className="mt-1 text-sm leading-5 text-slate-500">
             Learn how employers can build trust with job seekers.
           </p>
         </div>
       </div>
- 
+
       <div className="mt-6 flex-1">
         <Step
           number="1"
           title="Submit company details"
           description="Provide the requested company information and supporting documents, where applicable."
         />
- 
         <Step
           number="2"
           title="Admin reviews the submission"
           description="The CareerFlux admin reviews the submitted details before making a decision."
         />
- 
         <Step
           number="3"
           title="Receive a decision"
           description="Your verification request can be approved or rejected after review."
         />
- 
         <Step
           number="4"
           title="Display your verified badge"
@@ -379,7 +317,7 @@ function VerificationGuide() {
           last
         />
       </div>
- 
+
       <div className="mt-2 rounded-xl bg-brand-50 p-3">
         <p className="text-xs leading-5 text-slate-600">
           <span className="font-bold text-brand-700">Remember: </span>
@@ -395,51 +333,101 @@ export default function EmployerDashboard({ initialTab = "Dashboard" }) {
   const [postedJobs, setPostedJobs] = useState([]);
   const [applicants, setApplicants] = useState(initialApplicants);
   const [notice, setNotice] = useState("");
- 
+
+  // Saved profile data now comes from the backend (MongoDB)
+  const [employerProfile, setEmployerProfile] = useState({});
+  const [companyProfile, setCompanyProfile] = useState({});
+  const [companyWebsite, setCompanyWebsite] = useState("");
+  const [profilesLoaded, setProfilesLoaded] = useState(false);
+
+  const [employerProfileComplete, setEmployerProfileComplete] = useState(false);
+  const [companyProfileComplete, setCompanyProfileComplete] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState("none"); // "none" | "pending" | "verified"
+  const completedProfileSections = [
+    employerProfileComplete,
+    companyProfileComplete,
+    verificationStatus === "pending" || verificationStatus === "verified",
+  ];
+
+  // Load the saved employer + company profile once
+  useEffect(() => {
+    let alive = true;
+    Promise.all([getEmployerProfile(), getCompanyProfile()])
+      .then(([emp, comp]) => {
+        if (!alive) return;
+        if (emp) {
+          setEmployerProfile(emp);
+          setEmployerProfileComplete(true);
+        }
+        if (comp) {
+          setCompanyProfile(comp);
+          setCompanyWebsite(comp.website || "");
+          setCompanyProfileComplete(true);
+          if (comp.isVerified) setVerificationStatus("verified"); // set by admin later
+        }
+      })
+      .catch((err) => setNotice(err.message))
+      .finally(() => alive && setProfilesLoaded(true));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!notice) return undefined;
+
+    const timer = setTimeout(() => setNotice(""), 2800);
+    return () => clearTimeout(timer);
+  }, [notice]);
 
   const handlePostJob = (jobDetails) => {
-  const newJob = {
-    ...jobDetails,
-    id: Date.now(),
-    status: "Active",
-    postedOn: new Date().toISOString().slice(0, 10),
+    const newJob = {
+      ...jobDetails,
+      id: Date.now(),
+      status: "Active",
+      postedOn: new Date().toISOString().slice(0, 10),
+    };
+
+    setPostedJobs((current) => [newJob, ...current]);
+    setNotice("Your job has been posted successfully.");
+    setActiveTab("My Posted Jobs");
   };
 
-  setPostedJobs((current) => [newJob, ...current]);
-  setNotice("Your job has been posted successfully.");
-  setActiveTab("My Posted Jobs");
-};
-  
- 
   const handleApplicantStatusChange = (selectedApplicant, newStatus) => {
     setApplicants((currentApplicants) =>
       currentApplicants.map((applicant) =>
-        applicant.name === selectedApplicant.name
-          ? { ...applicant, status: newStatus }
-          : applicant
+        applicant.name === selectedApplicant.name ? { ...applicant, status: newStatus } : applicant
       )
     );
- 
   };
-const handleProfileSave = (profile) => {
-  // call your backend API here
-  setNotice("Your profile details were updated successfully.");
-};
 
-const [verificationStatus, setVerificationStatus] = useState("none"); // "none" | "pending" | "verified"
-const [companyWebsite, setCompanyWebsite] = useState("");
+  const handleProfileSave = async (values) => {
+    try {
+      setEmployerProfile(await saveEmployerProfile(values));
+      setNotice("Your profile details were updated successfully.");
+    } catch (err) {
+      setNotice(err.message);
+    }
+  };
 
-const handleCompanySave = (company) => {
-  setCompanyWebsite(company.website);
-  // call your backend API here
-  setNotice("Your company profile was saved successfully.");
-};
+  const handleCompanySave = async (values) => {
+    try {
+      const saved = await saveCompanyProfile(values);
+      setCompanyProfile(saved);
+      setCompanyWebsite(saved.website || "");
+      setNotice("Your company profile was saved successfully.");
+    } catch (err) {
+      setNotice(err.message);
+    }
+  };
 
-const handleVerificationSubmit = ({ website, document }) => {
-  // send website + PDF to your backend here, using FormData
-  setVerificationStatus("pending");
-  setNotice("Verification request submitted. We will review it shortly.");
-};
+  const handleVerificationSubmit = ({ website, document }) => {
+    // send website + PDF to your backend here, using FormData
+    setVerificationStatus("pending");
+    setNotice("Verification request submitted. We will review it shortly.");
+  };
+
+  const firstName = employerProfile.fullName?.split(" ")[0] || "there";
 
   return (
     <DashboardLayout
@@ -448,175 +436,164 @@ const handleVerificationSubmit = ({ website, document }) => {
       onNavigate={setActiveTab}
       workspaceLabel="Employer Workspace"
       menuTitle="Employer Menu"
-      // welcomeTitle="Welcome back, Ahmed"
-      // welcomeSubtitle="Manage jobs, applications, and candidate suggestions in one place."
-      welcomeTitle={activeTab === "Dashboard" ? "Welcome Back, Ahmed" : undefined}
-  welcomeSubtitle={
-    activeTab === "Dashboard"
-      ? "Manage jobs, applications, and candidate suggestions in one place."
-      : undefined
-  }
+      welcomeTitle={activeTab === "Dashboard" ? `Welcome Back, ${firstName}` : undefined}
+      welcomeSubtitle={
+        activeTab === "Dashboard"
+          ? "Manage jobs, applications, and candidate suggestions in one place."
+          : undefined
+      }
     >
- 
-          {/* Action feedback */}
-          {notice && (
-            <div
-              role="status"
-              className="flex items-start justify-between gap-3 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800"
-            >
-              <p>{notice}</p>
- 
-              <button
-                type="button"
-                onClick={() => setNotice("")}
-                aria-label="Dismiss message"
-                className="shrink-0"
-              >
-                <X size={17} />
-              </button>
-            </div>
+      {/* Action feedback */}
+      {notice && (
+        <div
+          role="status"
+          className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-xl bg-brand-800 px-4 py-3 text-xs text-white shadow-floating"
+        >
+          <CheckCircle2 size={15} className="text-brand-200" />
+          <span>{notice}</span>
+        </div>
+      )}
+
+      {(activeTab === "Employer Profile" || activeTab === "Company Profile") && !profilesLoaded && (
+        <p className="py-16 text-center text-sm text-slate-500">Loading your profile...</p>
+      )}
+
+      {activeTab === "Employer Profile" && profilesLoaded && (
+        <EmployerProfileForm
+          initialValues={employerProfile}
+          onSave={handleProfileSave}
+          onNext={() => setActiveTab("Company Profile")}
+          completedSections={completedProfileSections}
+          onCompletionChange={setEmployerProfileComplete}
+        />
+      )}
+      {activeTab === "Company Profile" && profilesLoaded && (
+        <CompanyProfileForm
+          initialValues={companyProfile}
+          onSave={handleCompanySave}
+          onNext={() => setActiveTab("Verification")}
+          onViewProfile={() => setActiveTab("Company Public Profile")}
+          completedSections={completedProfileSections}
+          onCompletionChange={setCompanyProfileComplete}
+        />
+      )}
+
+      {/* Same page candidates see: loads the saved company from MongoDB by id */}
+      {activeTab === "Company Public Profile" && (
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={() => setActiveTab("Company Profile")}
+            className="text-sm font-semibold text-brand-600 hover:text-brand-700"
+          >
+            Back to Company Profile
+          </button>
+          {companyProfile.id ? (
+            <CompanyProfile companyId={companyProfile.id} />
+          ) : (
+            <p className="py-16 text-center text-sm text-slate-500">Save your company profile first.</p>
           )}
- 
-      
-      {activeTab === "Employer Profile" && (
-  <EmployerProfileForm
-    initialValues={{
-      fullName: "Ahmed",
-      jobTitle: "",
-      email: "",
-      phone: "",
-    }}
-    onSave={handleProfileSave}
-  />
-)}
- {activeTab === "Company Profile" && (
-  <CompanyProfileForm
-    onSave={handleCompanySave}
-    onVerify={() => setActiveTab("Verification")}
-    isVerified={verificationStatus === "verified"}
-  />
-)}
+        </div>
+      )}
 
-{activeTab === "Verification" && (
-  <CompanyVerificationForm
-    initialWebsite={companyWebsite}
-    status={verificationStatus}
-    onSubmit={handleVerificationSubmit}
-    onBack={() => setActiveTab("Company Profile")}
-  />
-)}
-{activeTab === "Post a Job" && (
-  <PostJob onPostJob={handlePostJob} />
-)}
+      {activeTab === "Verification" && (
+        <CompanyVerificationForm
+          initialWebsite={companyWebsite}
+          status={verificationStatus}
+          completedSections={completedProfileSections}
+          onSubmit={handleVerificationSubmit}
+          onBack={() => setActiveTab("Company Profile")}
+        />
+      )}
+      {activeTab === "Post a Job" && <PostJob onPostJob={handlePostJob} />}
 
-{activeTab === "Reports & Complaints" && <ReportsComplaints />}
+      {activeTab === "Reports & Complaints" && <ReportsComplaints />}
 
-{activeTab === "My Posted Jobs" && (
-  <MyPostedJobs
-    jobs={postedJobs}
-    onDelete={(jobId) =>
-      setPostedJobs((current) =>
-        current.filter((job) => job.id !== jobId)
-      )
-    }
-    onClose={(jobId) =>
-      setPostedJobs((current) =>
-        current.map((job) =>
-          job.id === jobId
-            ? { ...job, status: "Closed" }
-            : job
-        )
-      )
-    }
-  />
-)}
-{activeTab === "All Applications" && (
-  <AllApplications
-    applicants={applicants}
-    onStatusChange={handleApplicantStatusChange}
-  />
-)}
-{activeTab === "Search Candidates" && (
-  <SearchCandidates
-    onNotify={setNotice}
-    onViewProfile={(candidate) => {
-      // see the options below
-    }}
-  />
-)}
+      {activeTab === "My Posted Jobs" && (
+        <MyPostedJobs
+          jobs={postedJobs}
+          onDelete={(jobId) => setPostedJobs((current) => current.filter((job) => job.id !== jobId))}
+          onClose={(jobId) =>
+            setPostedJobs((current) =>
+              current.map((job) => (job.id === jobId ? { ...job, status: "Closed" } : job))
+            )
+          }
+        />
+      )}
+      {activeTab === "All Applications" && (
+        <AllApplications applicants={applicants} onStatusChange={handleApplicantStatusChange} />
+      )}
+      {activeTab === "Search Candidates" && (
+        <SearchCandidates
+          onNotify={setNotice}
+          onViewProfile={(candidate) => {
+            // see the options below
+          }}
+        />
+      )}
 
+      {activeTab === "Dashboard" && (
+        <>
+          {/* Banner card + statistics (shared component) */}
+          <DashboardOverview
+            banner={{
+              icon: ShieldCheck,
+              title: "Employer Legal Verification",
+              badge: "In review",
+              description:
+                "Verification is optional. Approved employers can display a verified badge to help build trust with job seekers.",
+              buttonLabel: "View Verification",
+              onButtonClick: () => setActiveTab("Verification"),
+            }}
+            stats={employerStats}
+          />
 
-{activeTab === "Dashboard" && (
-  <>
-  {/* Banner card + statistics (shared component) */}
-      <DashboardOverview
-        banner={{
-          icon: ShieldCheck,
-          title: "Employer Legal Verification",
-          badge: "In review",
-          description:
-            "Verification is optional. Approved employers can display a verified badge to help build trust with job seekers.",
-          buttonLabel: "View Verification",
-          onButtonClick: () =>  setActiveTab("Verification"),
-        }}
-        stats={employerStats}
-      />
- 
- 
           {/* Applications chart and hiring funnel */}
           <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
             <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-soft sm:p-6 xl:col-span-2">
-              <SectionHeading
-                title="Applications received"
-                subtitle="Last 7 days, across all posted jobs"
-              >
+              <SectionHeading title="Applications received" subtitle="Last 7 days, across all posted jobs">
                 <span className="flex items-center gap-1 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
                   <ArrowUpRight size={14} />
                   +18% vs last week
                 </span>
               </SectionHeading>
- 
+
               <div className="mt-5">
                 <ApplicationsChart />
               </div>
             </div>
- 
+
             <HiringFunnelCard />
           </section>
- 
+
           {/* Platform guides: equal-sized cards with explanatory steps */}
           <section className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-2">
             <CandidateInvitationGuide />
             <VerificationGuide />
           </section>
- 
+
           {/* Latest applications: no search bar */}
           <section className="space-y-5 rounded-2xl border border-stone-200 bg-white p-5 shadow-soft sm:p-6">
             <div className="flex flex-col justify-between gap-3 border-b border-stone-100 pb-4 sm:flex-row sm:items-center">
-              <SectionHeading
-                title="Latest applications"
-                subtitle="Review candidates who applied to your jobs"
-              />
- 
+              <SectionHeading title="Latest applications" subtitle="Review candidates who applied to your jobs" />
+
               <span className="self-start rounded-full bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-600">
-                {applicants.filter((item) => item.status === "New").length}{" "}
-                new applicants
+                {applicants.filter((item) => item.status === "New").length} new applicants
               </span>
             </div>
-              
+
             <div className="space-y-4">
               {applicants.map((applicant) => (
                 <ApplicantCard
                   key={applicant.id}
                   applicant={applicant}
-                 onStatusChange={handleApplicantStatusChange}
+                  onStatusChange={handleApplicantStatusChange}
                 />
               ))}
             </div>
-            
           </section>
-          </>
-)}
+        </>
+      )}
     </DashboardLayout>
   );
 }
