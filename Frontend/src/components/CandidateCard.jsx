@@ -93,7 +93,15 @@ export default function CandidateCard({
       onClick={() => onOpen(candidate)}
       onKeyDown={handleKey}
       aria-label={`View profile of ${candidate.name}`}
-      className="group flex cursor-pointer flex-col justify-between space-y-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm outline-none transition hover:border-brand-500/40 focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-100"
+      // className="group flex cursor-pointer flex-col justify-between space-y-4 
+      // rounded-2xl border border-stone-200 bg-white p-5 shadow-sm outline-none 
+      // transition hover:border-brand-500/40 focus-visible:border-brand-500 
+      // focus-visible:ring-2 focus-visible:ring-brand-100"
+      className="group flex h-full min-h-[232px] w-full cursor-pointer flex-col 
+      justify-between space-y-4 rounded-2xl border border-stone-200 bg-white 
+      p-5 shadow-sm outline-none transition hover:border-brand-500/40
+       focus-visible:border-brand-500 focus-visible:ring-2
+        focus-visible:ring-brand-100"
     >
       <div className="space-y-3">
         <div className="flex items-start justify-between gap-2">
