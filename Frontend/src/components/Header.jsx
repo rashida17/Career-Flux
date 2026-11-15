@@ -13,7 +13,7 @@ import {
   User,
 } from "lucide-react";
 
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import RoleSelectModal from "./RoleSelectModal";
 
 // ==========================================
@@ -68,6 +68,7 @@ export default function Header({
   role: roleProp,
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // UI states
   const [user, setUser] = useState(() => userProp || getStoredUser());
@@ -154,6 +155,19 @@ export default function Header({
     };
   }, []);
 
+  useEffect(() => {
+    if (location.pathname !== "/" || !location.hash) return;
+
+    const sectionId = location.hash.slice(1);
+    const frame = window.requestAnimationFrame(() => {
+      document
+        .getElementById(sectionId)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.pathname, location.hash]);
+
   // ==========================================
   // AUTHENTICATION ACTIONS
   // ==========================================
@@ -232,9 +246,17 @@ export default function Header({
       return;
     }
 
-    if (id === "home") navigate("/#home");
-    if (id === "jobs") navigate("/#jobs");
-    if (id === "about") navigate("/#about");
+    if (id === "home" || id === "jobs" || id === "about") {
+      if (location.pathname !== "/") {
+        navigate(`/#${id}`);
+        return;
+      }
+
+      if (location.hash !== `#${id}`) navigate(`/#${id}`);
+      document
+        .getElementById(id)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   // ==========================================

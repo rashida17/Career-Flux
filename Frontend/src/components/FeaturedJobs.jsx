@@ -99,7 +99,7 @@ export default function FeaturedJobs({ search, onClear }) {
     <section
       id="jobs"
       aria-labelledby="jobs-heading"
-      className="border-b border-stone-200 bg-cream py-14 sm:py-16"
+      className="scroll-mt-24 border-b border-stone-200 bg-cream py-14 sm:py-16"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Heading */}
@@ -182,9 +182,12 @@ export default function FeaturedJobs({ search, onClear }) {
             </button>
           </div>
         ) : (
-          <ul role="list" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <ul
+            role="list"
+            className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          >
             {visibleJobs.map((job) => (
-              <li key={job.id} className="flex">
+              <li key={job.id} className="flex w-full min-w-0">
                 <JobCard
                   job={job}
                   isSaved={savedJobs.includes(job.id)}

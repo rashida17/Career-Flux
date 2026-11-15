@@ -354,7 +354,7 @@ function About() {
     <section
       id="about"
       aria-labelledby="about-heading"
-      className="bg-white py-16 sm:py-20"
+      className="scroll-mt-24 bg-white py-16 sm:py-20"
     >
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
         {/* Left: heading, paragraph and shared strengths */}

@@ -316,7 +316,8 @@ export default function SearchCandidates({ onViewProfile }) {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            // <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),280px))] justify-center gap-4">
               {results.map((candidate) => (
                 <CandidateCard
                   key={candidate.id}

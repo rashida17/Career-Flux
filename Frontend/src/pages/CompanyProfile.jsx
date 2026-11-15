@@ -3,7 +3,6 @@ import { getPublicCompany } from "../api/profile";
 import {
   FaLocationDot,
   FaUsers,
-  FaBriefcase,
   FaCircle,
   FaEnvelope,
   FaPhone,
@@ -13,88 +12,11 @@ import {
   FaBuilding,
   FaLandmark,
   FaUser, 
-  FaMoneyBillWave,
-  FaRegClock,
-  FaArrowRight,
 } from "react-icons/fa6";
-import CompanyProfileHero, {
-  CompanyLogo,
-} from "../components/CompanyProfileHero";
-
-/* ---------- Job card ---------- */
-const badgeStyles = {
-  red: "bg-red-50 text-red-700 border border-red-200",
-  amber: "bg-amber-50 text-amber-800 border border-amber-200",
-  blue: "bg-blue-50 text-blue-700 border border-blue-200",
-  slate: "bg-slate-100 text-slate-700",
-  green: "bg-emerald-50 text-emerald-800",
-};
-
-function JobCard({ job, company, onView }) {
-  return (
-    <div className="bg-white rounded-2xl p-5 border border-stone-200 hover:border-brand-500/40 transition flex flex-col justify-between space-y-4 shadow-sm">
-      <div className="space-y-3">
-        <div className="flex items-center space-x-3">
-          <CompanyLogo
-            logoUrl={company.logoUrl}
-            name={company.name}
-            className="w-10 h-10"
-          />
-          <div>
-       
-            <h4 className="text-sm font-bold text-slate-900 hover:text-brand-500 transition cursor-pointer">
-              {job.title}
-            </h4>
-            <p className="text-[11px] text-slate-400">{company.name}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          {job.badges.map((b) => (
-            <span
-              key={b.label}
-              className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold ${badgeStyles[b.tone]}`}
-            >
-              {b.label}
-            </span>
-          ))}
-        </div>
-
-        <div className="space-y-1 text-xs">
-          <div className="font-black text-slate-900 flex items-center space-x-1">
-            <FaMoneyBillWave className="text-emerald-600 text-xs" />
-            <span>{job.salary}</span>
-          </div>
-          <div className="text-[11px] text-slate-500 flex items-center space-x-3">
-            <span className="flex items-center gap-1">
-              <FaBriefcase className="text-slate-400" /> {job.level}
-            </span>
-            <span className="flex items-center gap-1">
-              <FaRegClock className="text-slate-400" /> {job.posted}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-        <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
-          <FaLocationDot className="text-brand-500" /> {job.location}
-        </span>
-        <button
-          onClick={() => onView?.(job)}
-          className="px-3.5 py-1.5 border border-brand-500 text-brand-500 hover:bg-brand-500 hover:text-white font-bold text-xs rounded-xl transition flex items-center space-x-1"
-        >
-          <span>View</span>
-          <FaArrowRight className="text-[10px]" />
-        </button>
-      </div>
-    </div>
-  );
-}
+import CompanyProfileHero from "../components/CompanyProfileHero";
+import JobCard from "../components/JobCard";
 
 /*  Data (replace with  API response)  */
-
-
 const SnapshotRow = ({ icon: Icon, label, children, first }) => (
   <div className={`${first ? "pt-1" : "pt-3"} flex items-start space-x-3`}>
     <Icon className="text-brand-500 mt-0.5 text-sm w-4 shrink-0" />
@@ -153,7 +75,8 @@ export default function CompanyProfile({ companyId, onViewJob }) {
 
           <div
             ref={jobsRef}
-            className="bg-white rounded-3xl p-6 md:p-8 border border-stone-200 shadow-sm space-y-6 scroll-mt-24"
+            // className="bg-white rounded-3xl p-6 md:p-8 border border-stone-200 shadow-sm space-y-6 scroll-mt-24"
+            className="space-y-6 scroll-mt-24"
           >
             <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
               <h3 className="text-lg font-black">Latest Job Openings</h3>
@@ -170,7 +93,10 @@ export default function CompanyProfile({ companyId, onViewJob }) {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div 
+            // className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+           className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),280px))] justify-center gap-4">
+            
               {jobs.map((job) => (
                 <JobCard
                   key={job.id}
