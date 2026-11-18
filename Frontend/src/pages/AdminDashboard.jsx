@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -7,8 +6,8 @@ import DashboardLayout from '../components/DashboardLayout';
 import PlatformChart from '../components/admin/PlatformChart';
 import UserDistributionChart from '../components/admin/UserDistributionChart';
 import RecentComplaints from '../components/admin/RecentComplaints';
+import RecentVerificationRequests from '../components/admin/RecentVerificationRequests';
 import ManageAccounts from '../components/admin/ManageAccounts';
-import CompanyVerification from '../components/admin/CompanyVerification';
 
 import {
   Users,
@@ -36,36 +35,11 @@ const adminNavigationItems = [
 
 // Statistics
 const stats = [
-  {
-    title: 'Total Users',
-    value: '1,248',
-    growth: '+12%',
-    icon: Users,
-  },
-  {
-    title: 'Job Seekers',
-    value: '842',
-    growth: '+10%',
-    icon: UserRound,
-  },
-  {
-    title: 'Companies',
-    value: '286',
-    growth: '+8%',
-    icon: Building2,
-  },
-  {
-    title: 'Total Jobs',
-    value: '3,572',
-    growth: '+15%',
-    icon: BriefcaseBusiness,
-  },
-  {
-    title: 'Total Applications',
-    value: '8,946',
-    growth: '+18%',
-    icon: FileText,
-  },
+  { title: 'Total Users', value: '1,248', growth: '+12%', icon: Users },
+  { title: 'Job Seekers', value: '842', growth: '+10%', icon: UserRound },
+  { title: 'Companies', value: '286', growth: '+8%', icon: Building2 },
+  { title: 'Total Jobs', value: '3,572', growth: '+15%', icon: BriefcaseBusiness },
+  { title: 'Total Applications', value: '8,946', growth: '+18%', icon: FileText },
 ];
 
 export default function AdminDashboard() {
@@ -80,6 +54,12 @@ export default function AdminDashboard() {
   const handleNavigate = (label) => {
     if (label === 'Manage Accounts') {
       navigate('/admin/manage-accounts');
+      return;
+    }
+
+    // Company Verification is now its own page
+    if (label === 'Company Verification') {
+      navigate('/admin/company-verification');
       return;
     }
 
@@ -147,10 +127,10 @@ export default function AdminDashboard() {
 
           <RecentComplaints />
 
+          <RecentVerificationRequests />
+
           {/* Recently Added Users - Last 24 Hours */}
           <ManageAccounts mode="recent" />
-
-          <CompanyVerification />
         </>
       )}
 
@@ -165,11 +145,6 @@ export default function AdminDashboard() {
       {/* Reports & Complaints */}
       {activeTab === 'Reports & Complaints' && (
         <RecentComplaints />
-      )}
-
-      {/* Company Verification */}
-      {activeTab === 'Company Verification' && (
-        <CompanyVerification />
       )}
 
       {/* Settings */}

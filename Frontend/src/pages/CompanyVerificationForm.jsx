@@ -36,7 +36,8 @@ const centerWrapper =
 
 export default function CompanyVerification({
   initialWebsite = "",
-  status = "none", // "none" | "pending" | "verified"
+  status = "none", // "none" | "pending" | "verified" | "rejected"
+  rejectionReason = "",
   onSubmit,
   onBack,
   completedSections,
@@ -50,7 +51,7 @@ export default function CompanyVerification({
       <div className="rounded-3xl border border-stone-200 bg-white p-6 sm:p-8">
         <div className="flex items-start justify-between gap-4">
           <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
-            Employer Verification
+            Company Verification
           </h2>
           <ProfileProgress completedSections={completedSections} />
         </div>
@@ -86,23 +87,33 @@ export default function CompanyVerification({
         completedSections={completedSections}
         fields={fields}
         initialValues={{ website: initialWebsite }}
-        onSubmit={(values) => {
-          onSubmit?.({
+        onSubmit={async (values) => {
+          // only switch to the "submitted" screen if the server accepted the request
+          const ok = await onSubmit?.({
             website: values.website.trim(),
             document: values.document,
           });
-          setSubmitted(true);
+          if (ok !== false) setSubmitted(true);
         }}
         headerTop={
-          onBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700"
-            >
-              <ArrowLeft size={16} /> Back to Company Profile
-            </button>
-          )
+          <>
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700"
+              >
+                <ArrowLeft size={16} /> Back to Company Profile
+              </button>
+            )}
+            {status === "rejected" && (
+              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                <p className="font-bold">Your last verification request was not approved.</p>
+                {rejectionReason && <p className="mt-1">Reason: {rejectionReason}</p>}
+                <p className="mt-1">Please fix this and submit a new request.</p>
+              </div>
+            )}
+          </>
         }
       />
     </div>

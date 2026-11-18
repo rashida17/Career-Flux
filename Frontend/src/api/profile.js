@@ -1,12 +1,12 @@
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+export const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-const headers = () => {
-  const token =
-    localStorage.getItem("careerFluxToken") ||
-    sessionStorage.getItem("careerFluxToken");
+// login saves the token as "careerFluxToken" (localStorage if "Keep me signed in", otherwise sessionStorage)
+export const headers = () => {
+  const token = localStorage.getItem("careerFluxToken") || sessionStorage.getItem("careerFluxToken");
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
-async function request(path, options = {}) {
+
+export async function request(path, options = {}) {
   const res = await fetch(`${API}${path}`, { ...options, headers: { ...headers(), ...options.headers } });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -14,7 +14,7 @@ async function request(path, options = {}) {
     err.errors = json.errors || {};
     throw err;
   }
- return json.data !== undefined ? json.data : json;
+  return json.data !== undefined ? json.data : json;
 }
 
 // Builds multipart body. File objects are uploaded; strings in file fields (existing URLs) are skipped.

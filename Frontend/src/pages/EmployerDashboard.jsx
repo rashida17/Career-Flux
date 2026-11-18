@@ -17,6 +17,7 @@ import {
   getEmployerProfile,
   saveEmployerProfile,
 } from "../api/profile";
+import { getMyVerification, submitVerification } from "../api/verification";
 import {
   ArrowUpRight,
   BriefcaseBusiness,
@@ -342,7 +343,8 @@ export default function EmployerDashboard({ initialTab = "Dashboard" }) {
 
   const [employerProfileComplete, setEmployerProfileComplete] = useState(false);
   const [companyProfileComplete, setCompanyProfileComplete] = useState(false);
-  const [verificationStatus, setVerificationStatus] = useState("none"); // "none" | "pending" | "verified"
+  const [verificationStatus, setVerificationStatus] = useState("none"); // "none" | "pending" | "verified" | "rejected"
+  const [verificationReason, setVerificationReason] = useState("");
   const completedProfileSections = [
     employerProfileComplete,
     companyProfileComplete,
@@ -352,8 +354,8 @@ export default function EmployerDashboard({ initialTab = "Dashboard" }) {
   // Load the saved employer + company profile once
   useEffect(() => {
     let alive = true;
-    Promise.all([getEmployerProfile(), getCompanyProfile()])
-      .then(([emp, comp]) => {
+    Promise.all([getEmployerProfile(), getCompanyProfile(), getMyVerification().catch(() => null)])
+      .then(([emp, comp, ver]) => {
         if (!alive) return;
         if (emp) {
           setEmployerProfile(emp);
@@ -363,7 +365,10 @@ export default function EmployerDashboard({ initialTab = "Dashboard" }) {
           setCompanyProfile(comp);
           setCompanyWebsite(comp.website || "");
           setCompanyProfileComplete(true);
-          if (comp.isVerified) setVerificationStatus("verified"); // set by admin later
+        }
+        if (ver) {
+          setVerificationStatus(ver.status); // "none" | "pending" | "verified" | "rejected"
+          setVerificationReason(ver.rejectionReason || "");
         }
       })
       .catch((err) => setNotice(err.message))
@@ -421,10 +426,17 @@ export default function EmployerDashboard({ initialTab = "Dashboard" }) {
     }
   };
 
-  const handleVerificationSubmit = ({ website, document }) => {
-    // send website + PDF to your backend here, using FormData
-    setVerificationStatus("pending");
-    setNotice("Verification request submitted. We will review it shortly.");
+  const handleVerificationSubmit = async ({ website, document }) => {
+    try {
+      await submitVerification({ website, document });
+      setVerificationStatus("pending");
+      setVerificationReason("");
+      setNotice("Verification request submitted. We will review it shortly.");
+      return true;
+    } catch (err) {
+      setNotice(err.message);
+      return false;
+    }
   };
 
   const firstName = employerProfile.fullName?.split(" ")[0] || "there";
@@ -500,6 +512,7 @@ export default function EmployerDashboard({ initialTab = "Dashboard" }) {
         <CompanyVerificationForm
           initialWebsite={companyWebsite}
           status={verificationStatus}
+          rejectionReason={verificationReason}
           completedSections={completedProfileSections}
           onSubmit={handleVerificationSubmit}
           onBack={() => setActiveTab("Company Profile")}

@@ -9,7 +9,7 @@ import JobSeekerDashboard from "./pages/JobSeekerDashboard";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import ManageAccountsPage from "./pages/ManageAccountsPage";
-
+ import AdminCompanyVerification from "./pages/AdminCompanyVerification";
 export default function App() {
   return (
     <BrowserRouter>
@@ -55,6 +55,8 @@ export default function App() {
               path="/jobseekerdashboard"
               element={<JobSeekerDashboard />}
             />
+            
+    <Route path="/admin/company-verification" element={<AdminCompanyVerification />} />
           </Routes>
         </main>
 

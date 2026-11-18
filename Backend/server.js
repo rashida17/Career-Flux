@@ -10,6 +10,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
 import errorHandler from "./middleware/errorHandler.js";
 import CompanyProfileRoutes from "./routes/CompanyProfileRoutes.js";
+import verificationRoutes from "./routes/verificationRoutes.js";
 const app = express();
 
 app.use(cors({
@@ -26,6 +27,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api", CompanyProfileRoutes);
+app.use("/api", verificationRoutes);
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
