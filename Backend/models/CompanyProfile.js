@@ -10,8 +10,8 @@ const companyProfileSchema = new mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, unique: true, index: true },
 
     companyName: { type: String, required: true, trim: true, maxlength: 120 },
-    logo: { type: String, required: true },       // stored as relative path e.g. /uploads/logos/xxx.png
-    coverImage: { type: String, default: "" },    // relative path
+    logo: { type: String, required: true },       // Cloudinary URL
+    coverImage: { type: String, default: "" },    // Cloudinary URL
     establishedDate: { type: String, required: true }, // "YYYY-MM-DD" (matches <input type="date">)
     ownership: { type: String, enum: OWNERSHIP, required: true },
     size: { type: String, enum: SIZES, required: true },

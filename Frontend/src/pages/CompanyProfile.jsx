@@ -3,7 +3,6 @@ import { getPublicCompany } from "../api/profile";
 import {
   FaLocationDot,
   FaUsers,
-  FaCircle,
   FaEnvelope,
   FaPhone,
   FaGlobe,
@@ -15,6 +14,7 @@ import {
 } from "react-icons/fa6";
 import CompanyProfileHero from "../components/CompanyProfileHero";
 import JobCard from "../components/JobCard";
+import LiveCount from "../components/LiveCount";
 
 /*  Data (replace with  API response)  */
 const SnapshotRow = ({ icon: Icon, label, children, first }) => (
@@ -80,17 +80,10 @@ export default function CompanyProfile({ companyId, onViewJob }) {
           >
             <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
               <h3 className="text-lg font-black">Latest Job Openings</h3>
-              <span className="inline-flex items-center whitespace-nowrap text-[11px] font-bold text-emerald-600">
-                <span
-                  className="relative me-1.5 flex h-2 w-2"
-                  aria-hidden="true"
-                >
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-50 motion-reduce:animate-none" />
-                  <FaCircle className="relative h-2 w-2 text-emerald-500" />
-                </span>
+              <LiveCount>
                 Showing {jobs.length} of {company.totalOpenRoles ?? jobs.length}{" "}
                 open roles
-              </span>
+              </LiveCount>
             </div>
 
             <div 

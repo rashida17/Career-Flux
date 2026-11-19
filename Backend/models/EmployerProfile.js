@@ -7,7 +7,7 @@ const employerProfileSchema = new mongoose.Schema(
     jobTitle: { type: String, required: true, trim: true, maxlength: 100 },
     email: { type: String, required: true, trim: true, lowercase: true },
     phone: { type: String, required: true, trim: true },
-    photo: { type: String, default: "" }, // optional, relative path
+    photo: { type: String, default: "" }, // optional Cloudinary URL
   },
   { timestamps: true }
 );

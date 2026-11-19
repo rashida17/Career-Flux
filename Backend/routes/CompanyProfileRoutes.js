@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { imageUpload } from "../middleware/upload.js";
+import { imageUpload } from "../middleware/Upload.js";
 import { protect, employerOnly } from "../middleware/authMiddleware.js";
 import {
   getMyCompany, saveMyCompany, getMyEmployer, saveMyEmployer,

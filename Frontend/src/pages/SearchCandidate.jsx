@@ -12,6 +12,7 @@ import {
 import CandidateCard from "../components/CandidateCard";
 import CandidateFilterSelect from "../components/CandidateFilterSelect";
 import CandidateInvitationModal from "../components/CandidateInvitationModal";
+import LiveCount from "../components/LiveCount";
 
 /* SAMPLE DATA (replace with your API response)*/
 const initialCandidates = [
@@ -286,9 +287,9 @@ export default function SearchCandidates({ onViewProfile }) {
         )}
 
         <div className="flex items-center justify-between px-1">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          <LiveCount>
             Candidate Results ({results.length})
-          </h2>
+          </LiveCount>
           <button
             type="button"
             onClick={resetFilters}

@@ -3,7 +3,7 @@ import { protect, employerOnly, adminOnly } from "../middleware/authMiddleware.j
 import { verificationUpload } from "../middleware/verificationUpload.js";
 import {
   getMyVerification, submitVerification,
-  listRequests, getRequestCounts, getDocument, approveRequest, rejectRequest,
+  listRequests, getRequestCounts, getDocument, approveRequest, rejectRequest, unverifyRequest,
 } from "../controllers/verificationController.js";
 
 const router = Router();
@@ -19,5 +19,6 @@ router.get("/admin/verification-requests", protect, adminOnly, wrap(listRequests
 router.get("/admin/verification-requests/:id/document", protect, adminOnly, wrap(getDocument));
 router.patch("/admin/verification-requests/:id/approve", protect, adminOnly, wrap(approveRequest));
 router.patch("/admin/verification-requests/:id/reject", protect, adminOnly, wrap(rejectRequest));
+router.patch("/admin/verification-requests/:id/unverify", protect, adminOnly, wrap(unverifyRequest));
 
 export default router;

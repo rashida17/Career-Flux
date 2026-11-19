@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { FileSearch, Search } from "lucide-react";
 import ApplicantCard from "../components/ApplicantCard";
 import Dropdown from "../components/Dropdown";
+import LiveCount from "../components/LiveCount";
 
 const STATUS_TABS = ["All", "New", "Shortlisted", "Accepted", "Rejected"];
 
@@ -146,9 +147,9 @@ export default function AllApplications({ applicants = [], onStatusChange }) {
 
         {/* Result count + reset */}
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold text-slate-500">
+          <LiveCount>
             Showing {visible.length} of {applicants.length} applications
-          </p>
+          </LiveCount>
 
           <button
             type="button"

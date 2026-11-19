@@ -11,6 +11,7 @@ import ReportsComplaints from "./ReportsComplaints";
 import MyPostedJobs from "./MyPostedJobs";
 import AllApplications from "./AllApplications";
 import SearchCandidates from "./SearchCandidate";
+import LiveCount from "../components/LiveCount";
 import {
   getCompanyProfile,
   saveCompanyProfile,
@@ -19,6 +20,7 @@ import {
 } from "../api/profile";
 import { getMyVerification, submitVerification } from "../api/verification";
 import {
+  ArrowRight,
   ArrowUpRight,
   BriefcaseBusiness,
   Building2,
@@ -590,10 +592,20 @@ export default function EmployerDashboard({ initialTab = "Dashboard" }) {
             <div className="flex flex-col justify-between gap-3 border-b border-stone-100 pb-4 sm:flex-row sm:items-center">
               <SectionHeading title="Latest applications" subtitle="Review candidates who applied to your jobs" />
 
-              <span className="self-start rounded-full bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-600">
-                {applicants.filter((item) => item.status === "New").length} new applicants
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("All Applications")}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-brand-500 transition hover:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                  View All <ArrowRight size={16} />
+                </button>
+              </div>
             </div>
+
+            <LiveCount>
+              Showing {applicants.length} of {applicants.length} applications
+            </LiveCount>
 
             <div className="space-y-4">
               {applicants.map((applicant) => (

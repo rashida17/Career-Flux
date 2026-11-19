@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import CompanyProfile, { OWNERSHIP, SIZES, INDUSTRIES } from "../models/CompanyProfile.js";
 import EmployerProfile from "../models/EmployerProfile.js";
-import { removeFile, toRelPath } from "../middleware/upload.js";
+import { removeFile, toCloudUrl } from "../middleware/Upload.js";
 import Job from "../models/Job.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -9,15 +9,10 @@ const PHONE_RE = /^[+()\-\s\d]{7,20}$/;
 const TWO_MB = 2 * 1024 * 1024;
 
 /* ---------- helpers ---------- */
-const absUrl = (req, p) => {
-  if (!p) return "";
-  if (/^https?:\/\//i.test(p)) return p;
-  const base = process.env.BASE_URL || `${req.protocol}://${req.get("host")}`;
-  return `${base}${p}`;
-};
+const cloudStorageUrl = (url) => url || "";
 
 const cleanupUploads = (files) =>
-  Object.values(files || {}).flat().forEach((f) => removeFile(toRelPath(f)));
+  Object.values(files || {}).flat().forEach((f) => removeFile(toCloudUrl(f)));
 
 const normalizeWebsite = (w = "") => {
   const v = w.trim();
@@ -26,12 +21,12 @@ const normalizeWebsite = (w = "") => {
 };
 
 // shape the FORM reads (same field names as the forms)
-const companyToForm = (req, c) =>
+const companyToForm = (c) =>
   c && {
     id: c._id,
     companyName: c.companyName,
-    logo: absUrl(req, c.logo),
-    coverImage: absUrl(req, c.coverImage),
+    logo: cloudStorageUrl(c.logo),
+    coverImage: cloudStorageUrl(c.coverImage),
     establishedDate: c.establishedDate,
     ownership: c.ownership,
     size: c.size,
@@ -45,22 +40,22 @@ const companyToForm = (req, c) =>
     isVerified: c.isVerified,
   };
 
-const employerToForm = (req, e) =>
+const employerToForm = (e) =>
   e && {
     fullName: e.fullName,
     jobTitle: e.jobTitle,
     email: e.email,
     phone: e.phone,
-    photo: absUrl(req, e.photo),
+    photo: cloudStorageUrl(e.photo),
   };
 
 // shape the PUBLIC PROFILE page renders (same as buildCompanyProfile on the client)
-const toPublicProfile = (req, c, e) => ({
+const toPublicProfile = (c, e) => ({
   id: c._id,
   name: c.companyName,
   category: c.industry,
-  logoUrl: absUrl(req, c.logo),
-  coverUrl: absUrl(req, c.coverImage),
+  logoUrl: cloudStorageUrl(c.logo),
+  coverUrl: cloudStorageUrl(c.coverImage),
   location: c.location,
   size: c.size,
   employees: c.size,
@@ -79,7 +74,7 @@ const toPublicProfile = (req, c, e) => ({
     role: e?.jobTitle || "Employer",
     email: e?.email || "",
     phone: e?.phone || "",
-    avatar: absUrl(req, e?.photo),
+    avatar: cloudStorageUrl(e?.photo),
   },
 });
 
@@ -143,6 +138,7 @@ function validateCompany(b, { hasLogo, files }) {
 
   if (!hasLogo) err.logo = "Please upload your company logo.";
   if (files?.logo?.[0]?.size > TWO_MB) err.logo = "Image must be 2MB or smaller.";
+  if (files?.coverImage?.[0]?.size > TWO_MB) err.coverImage = "Image must be 2MB or smaller.";
   return err;
 }
 
@@ -163,7 +159,7 @@ const fail = (res, errors) => res.status(422).json({ message: "Please fix the hi
 /* ---------- company profile (employer, authenticated) ---------- */
 export const getMyCompany = async (req, res) => {
   const c = await CompanyProfile.findOne({ user: req.user._id });
-  res.json({ data: companyToForm(req, c) }); // null if not created yet
+  res.json({ data: companyToForm(c) }); // null if not created yet
 };
 
 export const saveMyCompany = async (req, res) => {
@@ -188,25 +184,25 @@ export const saveMyCompany = async (req, res) => {
   // isVerified is intentionally NOT in here
 
   const oldLogo = existing?.logo, oldCover = existing?.coverImage;
-  if (req.files?.logo?.[0]) update.logo = toRelPath(req.files.logo[0]);
-  if (req.files?.coverImage?.[0]) update.coverImage = toRelPath(req.files.coverImage[0]);
+  if (req.files?.logo?.[0]) update.logo = toCloudUrl(req.files.logo[0]);
+  if (req.files?.coverImage?.[0]) update.coverImage = toCloudUrl(req.files.coverImage[0]);
 
   const saved = await CompanyProfile.findOneAndUpdate(
     { user: req.user._id },
     { $set: update, $setOnInsert: { user: req.user._id } },
-    { new: true, upsert: true, runValidators: true }
+    { returnDocument: "after", upsert: true, runValidators: true }
   );
 
   if (update.logo && oldLogo) removeFile(oldLogo);
   if (update.coverImage && oldCover) removeFile(oldCover);
 
-  res.json({ message: "Company profile saved.", data: companyToForm(req, saved) });
+  res.json({ message: "Company profile saved.", data: companyToForm(saved) });
 };
 
 /* ---------- employer profile (employer, authenticated) ---------- */
 export const getMyEmployer = async (req, res) => {
   const e = await EmployerProfile.findOne({ user: req.user._id });
-  res.json({ data: employerToForm(req, e) });
+  res.json({ data: employerToForm(e) });
 };
 
 export const saveMyEmployer = async (req, res) => {
@@ -221,16 +217,16 @@ export const saveMyEmployer = async (req, res) => {
     email: b.email.trim().toLowerCase(),
     phone: b.phone.trim(),
   };
-  if (req.files?.photo?.[0]) update.photo = toRelPath(req.files.photo[0]);
+  if (req.files?.photo?.[0]) update.photo = toCloudUrl(req.files.photo[0]);
 
   const saved = await EmployerProfile.findOneAndUpdate(
     { user: req.user._id },
     { $set: update, $setOnInsert: { user: req.user._id } },
-    { new: true, upsert: true, runValidators: true }
+    { returnDocument: "after", upsert: true, runValidators: true }
   );
   if (update.photo && existing?.photo) removeFile(existing.photo);
 
-  res.json({ message: "Employer profile saved.", data: employerToForm(req, saved) });
+  res.json({ message: "Employer profile saved.", data: employerToForm(saved) });
 };
 
 /* ---------- public profile ---------- */
@@ -240,7 +236,7 @@ export const getMyPublicProfile = async (req, res) => {
   if (!c) return res.status(404).json({ message: "Save your company profile first." });
   const e = await EmployerProfile.findOne({ user: req.user._id });
   const { jobs, total } = await getJobsForCompany(c.user);
-  res.json({ data: { company: { ...toPublicProfile(req, c, e), totalOpenRoles: total }, jobs } });
+  res.json({ data: { company: { ...toPublicProfile(c, e), totalOpenRoles: total }, jobs } });
 };
 
 // Anyone (candidates) viewing /companies/:id
@@ -250,5 +246,5 @@ export const getPublicCompany = async (req, res) => {
   if (!c) return res.status(404).json({ message: "Company not found." });
   const e = await EmployerProfile.findOne({ user: c.user });
   const { jobs, total } = await getJobsForCompany(c.user);
-  res.json({ data: { company: { ...toPublicProfile(req, c, e), totalOpenRoles: total }, jobs } });
+  res.json({ data: { company: { ...toPublicProfile(c, e), totalOpenRoles: total }, jobs } });
 };

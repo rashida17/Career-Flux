@@ -1,12 +1,7 @@
-import fs from "fs";
-import path from "path";
 import crypto from "crypto";
 import multer from "multer";
 import { Readable } from "stream";
 import { v2 as cloudinary } from "cloudinary";
-
-// only used for OLD requests that were saved on disk before moving to Cloudinary
-export const VERIFICATION_DIR = path.join(process.cwd(), "private_uploads", "verification");
 
 const configure = () =>
   cloudinary.config({
@@ -18,14 +13,14 @@ const configure = () =>
 
 const pdfUploader = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 2 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype === "application/pdf") return cb(null, true);
     cb(new Error("Only PDF files are allowed."));
   },
 });
 
-// type "authenticated" = private: the file can NOT be opened without a signed URL
+// type "authenticated" = private: the file can NOT be opened without a signed request
 const uploadPdf = (buffer) =>
   new Promise((resolve, reject) => {
     configure();
@@ -44,7 +39,7 @@ const uploadPdf = (buffer) =>
 export const verificationUpload = (req, res, next) =>
   pdfUploader.single("document")(req, res, async (err) => {
     if (err) {
-      const message = err.code === "LIMIT_FILE_SIZE" ? "PDF must be 5MB or smaller." : err.message;
+      const message = err.code === "LIMIT_FILE_SIZE" ? "PDF must be 2MB or smaller." : err.message;
       return res.status(422).json({ message, errors: {} });
     }
     const file = req.file;
@@ -71,29 +66,49 @@ export const deleteVerificationFile = (file) => {
   cloudinary.uploader.destroy(file.cloudId, { resource_type: "raw", type: "authenticated" }).catch(() => {});
 };
 
-// Admin only: the server downloads the private file with a signed URL and streams it to the admin.
-// The signed URL never reaches the browser.
+// Admin only: the server fetches the private file from Cloudinary and streams it to the admin.
+// Two download methods are tried. If both fail, the real reason is printed in the BACKEND TERMINAL.
 export async function streamVerificationDocument(documentRef, res) {
-  // old request saved on local disk (just a file name, no folder)
-  if (!documentRef.includes("/")) {
-    const full = path.join(VERIFICATION_DIR, path.basename(documentRef));
-    if (!fs.existsSync(full)) return res.status(404).json({ message: "Document file is missing." });
-    return res.sendFile(full, { headers: { "Content-Type": "application/pdf", "Content-Disposition": "inline" } });
-  }
-
   configure();
-  const signedUrl = cloudinary.url(documentRef, {
-    resource_type: "raw",
-    type: "authenticated",
-    sign_url: true,
-    secure: true,
-  });
+  const attempts = [
+    // 1) authenticated API download link (valid for 5 minutes)
+    () =>
+      cloudinary.utils.private_download_url(documentRef, undefined, {
+        resource_type: "raw",
+        type: "authenticated",
+        expires_at: Math.floor(Date.now() / 1000) + 300,
+      }),
+    // 2) signed delivery link
+    () =>
+      cloudinary.url(documentRef, { resource_type: "raw", type: "authenticated", sign_url: true, secure: true }),
+  ];
 
-  const upstream = await fetch(signedUrl);
-  if (!upstream.ok || !upstream.body) {
-    return res.status(502).json({ message: "Could not load the document from storage." });
+  for (const [i, buildUrl] of attempts.entries()) {
+    try {
+      const upstream = await fetch(buildUrl());
+      if (upstream.ok && upstream.body) {
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", "inline");
+        const stream = Readable.fromWeb(upstream.body);
+        stream.on("error", () => res.end());
+        return stream.pipe(res);
+      }
+      console.error(
+        `[verification document] method ${i + 1} failed -> HTTP ${upstream.status}`,
+        (await upstream.text()).slice(0, 300),
+        "| x-cld-error:", upstream.headers.get("x-cld-error")
+      );
+    } catch (e) {
+      console.error(`[verification document] method ${i + 1} error ->`, e.message);
+    }
   }
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", "inline");
-  Readable.fromWeb(upstream.body).pipe(res);
+
+  // both methods failed: check whether the file even exists in Cloudinary, to explain why
+  try {
+    await cloudinary.api.resource(documentRef, { resource_type: "raw", type: "authenticated" });
+    console.error("[verification document] the file EXISTS in Cloudinary, so delivery is blocked. Turn on Settings > Security > 'PDF and ZIP files delivery' in the Cloudinary dashboard.");
+  } catch (e) {
+    console.error("[verification document] Cloudinary says:", e?.error?.message || e.message);
+  }
+  res.status(502).json({ message: "Could not load the document from storage. See the backend terminal for the reason." });
 }

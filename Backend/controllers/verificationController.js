@@ -6,12 +6,7 @@ import sendEmail from "../utils/sendEmail.js";
 import { deleteVerificationFile, streamVerificationDocument } from "../middleware/verificationUpload.js";
 
 const CLIENT_URL = () => process.env.CLIENT_URL || "http://localhost:5173";
-
-const absUrl = (req, p) => {
-  if (!p) return "";
-  if (/^https?:\/\//i.test(p)) return p;
-  return `${process.env.BASE_URL || `${req.protocol}://${req.get("host")}`}${p}`;
-};
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const escapeHtml = (s = "") =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -28,9 +23,16 @@ const safeEmail = async (payload) => {
 };
 
 async function notifyAdmins(company, request) {
-  const admins = await User.find({ role: "admin", isActive: true }).select("email");
-  const to = [...new Set([...admins.map((a) => a.email), process.env.ADMIN_NOTIFY_EMAIL].filter(Boolean))];
+  // If ADMIN_NOTIFY_EMAIL is set in .env, ONLY those addresses get the email (comma separated for several).
+  // Otherwise every active admin account gets it. Invalid addresses are skipped.
+  let to = (process.env.ADMIN_NOTIFY_EMAIL || "").split(",").map((s) => s.trim()).filter((s) => EMAIL_RE.test(s));
+  if (!to.length) {
+    const admins = await User.find({ role: "admin", isActive: true }).select("email");
+    to = admins.map((a) => a.email).filter((e) => EMAIL_RE.test(e));
+  }
+  to = [...new Set(to)];
   if (!to.length) return;
+
   const link = `${CLIENT_URL()}/admin/company-verification`;
   await safeEmail({
     to: to.join(","),
@@ -44,7 +46,7 @@ async function notifyAdmins(company, request) {
 
 /* ---------------- EMPLOYER ---------------- */
 
-// GET /api/verification/me  ->  { status: "none" | "pending" | "verified" | "rejected", rejectionReason }
+// GET /api/verification/me  ->  { status: "none" | "pending" | "verified" | "rejected" | "unverified", rejectionReason }
 export const getMyVerification = async (req, res) => {
   const company = await CompanyProfile.findOne({ user: req.user._id });
   if (!company) return res.json({ data: { status: "none", hasCompany: false } });
@@ -68,7 +70,7 @@ export const submitVerification = async (req, res) => {
   if (company.isVerified) return bail(409, "Your company is already verified.");
 
   const website = normalizeWebsite(req.body.website);
-  if (!/^https?:\/\/\S+\.\S+/i.test(website)) return bail(422, "Enter a valid company website URL.");
+  if (website && !/^https?:\/\/\S+\.\S+/i.test(website)) return bail(422, "Enter a valid company website URL.");
   if (!file) return bail(422, "Please upload your legal document as a PDF.");
 
   if (await VerificationRequest.exists({ company: company._id, status: "pending" })) {
@@ -95,9 +97,9 @@ export const submitVerification = async (req, res) => {
 
 /* ---------------- ADMIN ---------------- */
 
-// GET /api/admin/verification-requests?status=pending|approved|rejected
+// GET /api/admin/verification-requests?status=pending|approved|rejected|unverified
 export const listRequests = async (req, res) => {
-  const status = ["pending", "approved", "rejected"].includes(req.query.status) ? req.query.status : null;
+  const status = ["pending", "approved", "rejected", "unverified"].includes(req.query.status) ? req.query.status : null;
   const docs = await VerificationRequest.find(status ? { status } : {})
     .sort({ createdAt: -1 })
     .limit(200)
@@ -117,7 +119,7 @@ export const listRequests = async (req, res) => {
         id: r.company._id,
         name: r.company.companyName,
         email: r.company.contactEmail,
-        logo: absUrl(req, r.company.logo),
+        logo: r.company.logo || "",
       },
       accountEmail: r.user?.email || "",
     })),
@@ -128,7 +130,7 @@ export const getRequestCounts = async (req, res) => {
   const groupedCounts = await VerificationRequest.aggregate([
     { $group: { _id: "$status", count: { $sum: 1 } } },
   ]);
-  const counts = { all: 0, pending: 0, verified: 0, rejected: 0 };
+  const counts = { all: 0, pending: 0, verified: 0, rejected: 0, unverified: 0 };
 
   groupedCounts.forEach(({ _id, count }) => {
     const key = _id === "approved" ? "verified" : _id;
@@ -150,20 +152,21 @@ export const getDocument = async (req, res) => {
   await streamVerificationDocument(r.document, res);
 };
 
-async function loadPending(req, res) {
+async function loadReviewable(req, res) {
   if (!mongoose.isValidObjectId(req.params.id)) { res.status(404).json({ message: "Request not found." }); return null; }
   const r = await VerificationRequest.findById(req.params.id).populate("company", "companyName");
   if (!r) { res.status(404).json({ message: "Request not found." }); return null; }
-  if (r.status !== "pending") { res.status(409).json({ message: `This request was already ${r.status}.` }); return null; }
+  if (!["pending", "unverified"].includes(r.status)) { res.status(409).json({ message: `This request was already ${r.status}.` }); return null; }
   return r;
 }
 
 // PATCH /api/admin/verification-requests/:id/approve
 export const approveRequest = async (req, res) => {
-  const r = await loadPending(req, res);
+  const r = await loadReviewable(req, res);
   if (!r) return;
 
   r.status = "approved";
+  r.rejectionReason = "";
   r.reviewedBy = req.user._id;
   r.reviewedAt = new Date();
   await r.save();
@@ -186,8 +189,10 @@ export const rejectRequest = async (req, res) => {
   const reason = String(req.body.reason ?? "").trim().slice(0, 300);
   if (reason.length < 5) return res.status(422).json({ message: "Please give a short reason (at least 5 characters).", errors: {} });
 
-  const r = await loadPending(req, res);
-  if (!r) return;
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Request not found." });
+  const r = await VerificationRequest.findById(req.params.id).populate("company", "companyName");
+  if (!r) return res.status(404).json({ message: "Request not found." });
+  if (r.status !== "pending") return res.status(409).json({ message: `This request was already ${r.status}.` });
 
   r.status = "rejected";
   r.rejectionReason = reason;
@@ -207,4 +212,29 @@ export const rejectRequest = async (req, res) => {
     });
   }
   res.json({ message: "Request rejected.", data: { id: r._id, status: r.status } });
+};
+
+// PATCH /api/admin/verification-requests/:id/unverify
+export const unverifyRequest = async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Request not found." });
+  const r = await VerificationRequest.findById(req.params.id).populate("company", "companyName");
+  if (!r) return res.status(404).json({ message: "Request not found." });
+  if (r.status !== "approved") return res.status(409).json({ message: "Only a verified company can be unverified." });
+
+  r.status = "unverified";
+  r.reviewedBy = req.user._id;
+  r.reviewedAt = new Date();
+  await r.save();
+  await CompanyProfile.updateOne({ _id: r.company._id }, { isVerified: false });
+
+  const employer = await User.findById(r.user).select("email");
+  if (employer) {
+    safeEmail({
+      to: employer.email,
+      subject: "Your company verification was removed",
+      text: `The verification for ${r.company.companyName} has been removed by an administrator. You can submit a new verification request from your dashboard.`,
+      html: `<p>The verification for <b>${escapeHtml(r.company.companyName)}</b> has been removed by an administrator.</p><p>You can submit a new verification request from your dashboard.</p>`,
+    });
+  }
+  res.json({ message: "Company verification removed.", data: { id: r._id, status: r.status } });
 };

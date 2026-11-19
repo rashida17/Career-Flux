@@ -6,7 +6,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import PlatformChart from '../components/admin/PlatformChart';
 import UserDistributionChart from '../components/admin/UserDistributionChart';
 import RecentComplaints from '../components/admin/RecentComplaints';
-import RecentVerificationRequests from '../components/admin/RecentVerificationRequests';
+import CompanyVerification from '../components/admin/CompanyVerification';
 import ManageAccounts from '../components/admin/ManageAccounts';
 
 import {
@@ -127,7 +127,7 @@ export default function AdminDashboard() {
 
           <RecentComplaints />
 
-          <RecentVerificationRequests />
+          <CompanyVerification recentOnly />
 
           {/* Recently Added Users - Last 24 Hours */}
           <ManageAccounts mode="recent" />

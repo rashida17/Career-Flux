@@ -125,7 +125,7 @@ export default function CompanyProfileHero({ company, onViewJobs }) {
             )}
             {company.isVerified && (
               <span
-                className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-emerald-300 bg-emerald-100 px-2.5 py-0.5 text-[10px] font-black uppercase text-emerald-800"
+                className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-emerald-300 bg-emerald-100 px-2.5 py-0.5 text-xs font-black uppercase text-emerald-800"
                 title="Legal verification approved by CareerFlux Admin"
               >
                 <FaCircleCheck className="text-emerald-600" /> Verified Company

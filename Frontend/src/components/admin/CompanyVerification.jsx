@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Building2, ExternalLink, FileText, Globe, Search, ShieldCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { AlertCircle, ArrowRight, Building2, CheckCircle2, ExternalLink, FileText, Globe, Search, ShieldCheck, ShieldOff } from "lucide-react";
 import {
   listVerificationRequests,
   getVerificationRequestCounts,
@@ -7,12 +8,14 @@ import {
   rejectVerification,
   openVerificationDocument,
 } from "../../api/verification";
+import LiveCount from "../LiveCount";
 
 const FILTERS = [
   { value: "", label: "All", countKey: "all" },
   { value: "pending", label: "Pending", countKey: "pending" },
   { value: "approved", label: "Verified", countKey: "verified" },
   { value: "rejected", label: "Rejected", countKey: "rejected" },
+  { value: "unverified", label: "Unverified", countKey: "unverified" },
 ];
 
 const formatDate = (d) =>
@@ -21,31 +24,32 @@ const formatDate = (d) =>
 function StatusBadge({ status }) {
   if (status === "approved")
     return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-brand-200 bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-600">
+      <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-emerald-300 bg-emerald-100 px-2.5 py-0.5 text-xs font-black uppercase text-emerald-800">
         <ShieldCheck size={13} /> Verified
       </span>
     );
   if (status === "rejected")
     return (
-      <span className="rounded-full border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-700">
+      <span className="rounded-full border border-brand-200 bg-brand-50 px-2.5 py-0.5 text-xs font-bold text-brand-700">
         Rejected
       </span>
     );
   return (
-    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
+    <span className="rounded-full border border-stone-200 bg-stone-50 px-2.5 py-0.5 text-xs font-bold text-stone-700">
       Pending
     </span>
   );
 }
 
-export default function CompanyVerification() {
-  const [filter, setFilter] = useState("pending");
+export default function CompanyVerification({ recentOnly = false }) {
+  const navigate = useNavigate();
+  const [filter, setFilter] = useState(recentOnly ? "" : "pending");
   const [query, setQuery] = useState("");
   const [items, setItems] = useState([]);
   const [counts, setCounts] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [toast, setToast] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [rejectingId, setRejectingId] = useState(null);
   const [reason, setReason] = useState("");
@@ -53,34 +57,37 @@ export default function CompanyVerification() {
   const load = useCallback(() => {
     setLoading(true);
     setError("");
-    Promise.all([listVerificationRequests(filter), getVerificationRequestCounts()])
+    Promise.all([
+      listVerificationRequests(recentOnly ? "" : filter),
+      recentOnly ? Promise.resolve(null) : getVerificationRequestCounts(),
+    ])
       .then(([requests, requestCounts]) => {
-        setItems(requests);
-        setCounts(requestCounts);
+        setItems(recentOnly ? requests.slice(0, 5) : requests);
+        if (requestCounts) setCounts(requestCounts);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [filter]);
+  }, [filter, recentOnly]);
 
   useEffect(load, [load]);
 
   useEffect(() => {
-    if (!message) return undefined;
-    const t = setTimeout(() => setMessage(""), 3000);
+    if (!toast) return undefined;
+    const t = setTimeout(() => setToast(null), 2800);
     return () => clearTimeout(t);
-  }, [message]);
+  }, [toast]);
 
   const run = async (id, action, okMessage) => {
     setBusyId(id);
     setError("");
     try {
       await action();
-      setMessage(okMessage);
+      setToast({ message: okMessage, type: "success" });
       setRejectingId(null);
       setReason("");
       load();
     } catch (e) {
-      setError(e.message);
+      setToast({ message: e.message, type: "error" });
     } finally {
       setBusyId(null);
     }
@@ -90,7 +97,7 @@ export default function CompanyVerification() {
     try {
       await openVerificationDocument(id);
     } catch (e) {
-      setError(e.message);
+      setToast({ message: e.message, type: "error" });
     }
   };
 
@@ -109,45 +116,62 @@ export default function CompanyVerification() {
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-6 font-sans shadow-soft">
       <div className="mb-5 space-y-4">
-        <div>
-          <h3 className="text-lg font-semibold text-slate-900">Company Verification</h3>
-          <p className="mt-1 text-sm text-slate-500">Review legal documents before verifying a company</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className={recentOnly ? "text-lg font-bold text-slate-900" : "text-2xl font-black tracking-tight text-slate-900 sm:text-3xl"}>
+              {recentOnly ? "Recent Company Verification Requests" : "Company Verification"}
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              {recentOnly ? "Latest requests submitted by companies" : "Review legal documents before verifying a company"}
+            </p>
+          </div>
+          {recentOnly && (
+            <button
+              type="button"
+              onClick={() => navigate("/admin/company-verification")}
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-brand-500 transition hover:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+              View All <ArrowRight size={16} />
+            </button>
+          )}
         </div>
 
-        <div
-          role="tablist"
-          aria-label="Filter verification requests by status"
-          className="flex flex-wrap gap-2"
-        >
-          {FILTERS.map((f) => {
-            const active = filter === f.value;
-            return (
-              <button
-                key={f.label}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => setFilter(f.value)}
-                className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-bold transition ${
-                  active
-                    ? "border-brand-500 bg-brand-500 text-white"
-                    : "border-stone-200 bg-white text-slate-600 hover:border-brand-500/40 hover:text-brand-600"
-                }`}
-              >
-                {f.label}
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] ${
-                    active ? "bg-white/20 text-white" : "bg-brand-50 text-brand-700"
+        {!recentOnly && (
+          <div
+            role="tablist"
+            aria-label="Filter verification requests by status"
+            className="flex flex-wrap gap-2"
+          >
+            {FILTERS.map((f) => {
+              const active = filter === f.value;
+              return (
+                <button
+                  key={f.label}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setFilter(f.value)}
+                  className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-bold transition ${
+                    active
+                      ? "border-brand-500 bg-brand-500 text-white"
+                      : "border-stone-200 bg-white text-slate-600 hover:border-brand-500/40 hover:text-brand-600"
                   }`}
                 >
-                  {counts ? counts[f.countKey] : "..."}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                  {f.label}
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] ${
+                      active ? "bg-white/20 text-white" : "bg-brand-50 text-brand-700"
+                    }`}
+                  >
+                    {counts ? counts[f.countKey] : "..."}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
-        <div className="flex w-full justify-center border-t border-stone-100 pt-5">
+        {!recentOnly && <div className="flex w-full justify-center border-t border-stone-100 pt-5">
           <div className="flex w-full max-w-xl items-center gap-2 rounded-2xl border border-stone-200 bg-white p-2 shadow-sm">
             <div className="flex flex-1 items-center rounded-xl border border-stone-200 bg-cream px-4 py-2.5 transition focus-within:border-brand-500 focus-within:bg-white">
               <input
@@ -166,13 +190,18 @@ export default function CompanyVerification() {
               <Search size={16} />
             </span>
           </div>
-        </div>
+        </div>}
       </div>
 
-      {message && (
-        <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">{message}</p>
-      )}
       {error && <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{error}</p>}
+
+      {!loading && (
+        <div className="mb-3">
+          <LiveCount>
+            Showing {visibleItems.length} of {items.length} requests
+          </LiveCount>
+        </div>
+      )}
 
       {loading ? (
         <p className="py-10 text-center text-sm text-slate-500">Loading requests...</p>
@@ -205,12 +234,14 @@ export default function CompanyVerification() {
 
                     <p className="mt-1 break-all text-sm text-slate-500">{r.company?.email || r.accountEmail}</p>
 
-                    <p className="mt-2 flex items-start gap-2 text-sm text-slate-600">
-                      <Globe size={16} className="mt-0.5 shrink-0 text-brand-500" />
-                      <a href={r.website} target="_blank" rel="noreferrer" className="break-all hover:text-brand-600 hover:underline">
-                        {r.website}
-                      </a>
-                    </p>
+                    {r.website && (
+                      <p className="mt-2 flex items-start gap-2 text-sm text-slate-600">
+                        <Globe size={16} className="mt-0.5 shrink-0 text-brand-500" />
+                        <a href={r.website} target="_blank" rel="noreferrer" className="break-all hover:text-brand-600 hover:underline">
+                          {r.website}
+                        </a>
+                      </p>
+                    )}
 
                     <button
                       type="button"
@@ -226,12 +257,12 @@ export default function CompanyVerification() {
                     </p>
 
                     {r.status === "rejected" && r.rejectionReason && (
-                      <p className="mt-2 text-sm text-red-700">Reason: {r.rejectionReason}</p>
+                      <p className="mt-2 text-sm text-brand-700">Reason: {r.rejectionReason}</p>
                     )}
                   </div>
                 </div>
 
-                {r.status === "pending" && rejectingId !== r.id && (
+                {(r.status === "pending" ) && rejectingId !== r.id && (
                   <div className="flex shrink-0 gap-2">
                     <button
                       type="button"
@@ -241,14 +272,16 @@ export default function CompanyVerification() {
                     >
                       {busyId === r.id ? "Working..." : "Verify Company"}
                     </button>
-                    <button
-                      type="button"
-                      disabled={busyId === r.id}
-                      onClick={() => { setRejectingId(r.id); setReason(""); }}
-                      className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-red-300 hover:text-red-700 disabled:opacity-60"
-                    >
-                      Reject
-                    </button>
+                    {r.status === "pending" && (
+                      <button
+                        type="button"
+                        disabled={busyId === r.id}
+                        onClick={() => { setRejectingId(r.id); setReason(""); }}
+                        className="rounded-lg border border-slate-700 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-500 hover:text-brand-500 disabled:opacity-60"
+                      >
+                        Reject
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -271,14 +304,14 @@ export default function CompanyVerification() {
                       type="button"
                       disabled={busyId === r.id || reason.trim().length < 5}
                       onClick={() => run(r.id, () => rejectVerification(r.id, reason.trim()), "Request rejected. The employer was notified.")}
-                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                      className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:opacity-60"
                     >
                       Confirm rejection
                     </button>
                     <button
                       type="button"
                       onClick={() => setRejectingId(null)}
-                      className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+                      className="rounded-lg border border-slate-700 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-500 hover:text-brand-500 disabled:opacity-60"
                     >
                       Cancel
                     </button>
@@ -289,10 +322,18 @@ export default function CompanyVerification() {
           ))}
         </div>
       )}
-      {!loading && (
-        <p className="mt-4 text-xs font-semibold text-slate-500">
-          Showing {visibleItems.length} of {items.length} requests
-        </p>
+      {toast && (
+        <div
+          role="status"
+          className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-xl bg-brand-700 px-4 py-3 text-xs text-white shadow-floating"
+        >
+          {toast.type === "error" ? (
+            <AlertCircle size={15} className="text-brand-200" />
+          ) : (
+            <CheckCircle2 size={15} className="text-brand-200" />
+          )}
+          <span>{toast.message}</span>
+        </div>
       )}
     </section>
   );

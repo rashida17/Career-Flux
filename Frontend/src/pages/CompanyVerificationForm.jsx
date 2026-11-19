@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowLeft, Clock, Globe, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertCircle, ArrowLeft, Clock, Globe, ShieldCheck } from "lucide-react";
 import FormLayout from "../components/FormLayout";
 import { ProfileProgress } from "../components/FormFields";
 
@@ -10,6 +10,7 @@ const fields = [
     type: "url",
     icon: Globe,
     placeholder: "https://yourcompany.com",
+    optional: true,
     full: true,
   },
   {
@@ -18,7 +19,7 @@ const fields = [
     type: "file",
     accept: "application/pdf",
     typeLabel: "PDF",
-    maxSizeMB: 5,
+    maxSizeMB: 2,
     requiredMessage: "Please upload your legal document as a PDF.",
   },
 ];
@@ -36,15 +37,27 @@ const centerWrapper =
 
 export default function CompanyVerification({
   initialWebsite = "",
-  status = "none", // "none" | "pending" | "verified" | "rejected"
+  status = "none", // "none" | "pending" | "verified" | "rejected" | "unverified"
   rejectionReason = "",
   onSubmit,
   onBack,
   completedSections,
 }) {
   const [submitted, setSubmitted] = useState(false);
+  const [showRejectionToast, setShowRejectionToast] = useState(false);
   const isVerified = status === "verified";
   const isPending = submitted || status === "pending";
+
+  useEffect(() => {
+    if (status !== "rejected") {
+      setShowRejectionToast(false);
+      return undefined;
+    }
+
+    setShowRejectionToast(true);
+    const timer = setTimeout(() => setShowRejectionToast(false), 4000);
+    return () => clearTimeout(timer);
+  }, [status, rejectionReason]);
 
   if (isVerified || isPending) {
     return (
@@ -106,16 +119,22 @@ export default function CompanyVerification({
                 <ArrowLeft size={16} /> Back to Company Profile
               </button>
             )}
-            {status === "rejected" && (
-              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-                <p className="font-bold">Your last verification request was not approved.</p>
-                {rejectionReason && <p className="mt-1">Reason: {rejectionReason}</p>}
-                <p className="mt-1">Please fix this and submit a new request.</p>
-              </div>
-            )}
           </>
         }
       />
+      {showRejectionToast && status === "rejected" && (
+        <div
+          role="alert"
+          className="fixed bottom-5 right-5 z-50 flex max-w-sm items-start gap-2 rounded-xl  bg-brand-700 px-4 py-3 text-xs text-white shadow-floating"
+        >
+          <AlertCircle size={18} className="mt-0.5 shrink-0 text-brand-200" />
+          <div>
+            <p className="font-bold">Your last verification request was not approved.</p>
+            {rejectionReason && <p className="mt-1">Reason: {rejectionReason}</p>}
+            {/* <p className="mt-1">Please fix this and submit a new request.</p> */}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

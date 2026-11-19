@@ -46,7 +46,7 @@ const fields = [
   },
   {
     name: "coverImage", label: "Company Cover Image", type: "file", accept: "image/png,image/jpeg",
-    maxSizeMB: 5, typeLabel: "PNG or JPG image",
+    maxSizeMB: 2, typeLabel: "PNG or JPG image",
   },
 ];
 

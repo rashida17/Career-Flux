@@ -5,9 +5,9 @@ const verificationRequestSchema = new mongoose.Schema(
     company: { type: mongoose.Schema.Types.ObjectId, ref: "CompanyProfile", required: true},
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
     website: { type: String, trim: true, default: "" },
-    document: { type: String, required: true },          // file name inside private_uploads/verification
+    document: { type: String, required: true },          // private Cloudinary public ID
     originalName: { type: String, default: "document.pdf" },
-    status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending", index: true },
+    status: { type: String, enum: ["pending", "approved", "rejected", "unverified"], default: "pending", index: true },
     rejectionReason: { type: String, trim: true, default: "", maxlength: 300 },
     reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     reviewedAt: { type: Date },
