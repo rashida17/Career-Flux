@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import {
   Sparkles,
@@ -13,7 +12,7 @@ import {
   User,
 } from "lucide-react";
 
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import RoleSelectModal from "./RoleSelectModal";
 
 // ==========================================
@@ -68,10 +67,10 @@ export default function Header({
   role: roleProp,
 }) {
   const navigate = useNavigate();
-  const location = useLocation();
 
   // UI states
   const [user, setUser] = useState(() => userProp || getStoredUser());
+  const [profileData, setProfileData] = useState(null); // Holds live profile data (full_name, photo)
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -80,6 +79,74 @@ export default function Header({
   const [searchQuery, setSearchQuery] = useState("");
 
   const dropdownRef = useRef(null);
+
+  // ==========================================
+  // FETCH JOB SEEKER PROFILE DATA FROM BACKEND
+  // ==========================================
+
+  const fetchProfile = async () => {
+    const currentUser = userProp || getStoredUser();
+    if (!currentUser) {
+      setProfileData(null);
+      return;
+    }
+
+    const role = roleProp || currentUser?.role || "jobseeker";
+    if (role === "jobseeker") {
+      try {
+        const token = 
+          localStorage.getItem("careerFluxToken") || 
+          sessionStorage.getItem("careerFluxToken") || 
+          localStorage.getItem("token") ||
+          sessionStorage.getItem("token");
+
+        if (!token) {
+          setProfileData(null);
+          return;
+        }
+
+        const res = await fetch("http://localhost:5000/api/jobseeker/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.profile) {
+            setProfileData(data.profile);
+          }
+        } else {
+          setProfileData(null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch header profile details:", err);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+
+    const handleProfileUpdate = () => {
+      fetchProfile();
+    };
+
+    const handleAuthChange = () => {
+      setUser(userProp || getStoredUser());
+      fetchProfile();
+    };
+
+    window.addEventListener("careerFluxProfileUpdate", handleProfileUpdate);
+    window.addEventListener("careerFluxAuthChange", handleAuthChange);
+    window.addEventListener("storage", handleAuthChange);
+
+    return () => {
+      window.removeEventListener("careerFluxProfileUpdate", handleProfileUpdate);
+      window.removeEventListener("careerFluxAuthChange", handleAuthChange);
+      window.removeEventListener("storage", handleAuthChange);
+    };
+  }, [userProp, roleProp]);
 
   // ==========================================
   // ROLE DETECTION
@@ -104,7 +171,10 @@ export default function Header({
     ? "/employerdashboard"
     : "/jobseekerdashboard";
 
+  // Use live profile full_name if available, fallback to user name or role name
   const displayName =
+    profileData?.full_name ||
+    profileData?.fullName ||
     user?.name ||
     user?.firstName ||
     (isEmployer
@@ -113,25 +183,11 @@ export default function Header({
       ? "Admin"
       : "Job Seeker");
 
-  const avatarUrl = user?.avatar || user?.profilePicture;
-
-  // ==========================================
-  // LISTEN FOR LOGIN / LOGOUT CHANGES
-  // ==========================================
-
-  useEffect(() => {
-    const syncAuth = () => {
-      setUser(userProp || getStoredUser());
-    };
-
-    window.addEventListener("storage", syncAuth);
-    window.addEventListener("careerFluxAuthChange", syncAuth);
-
-    return () => {
-      window.removeEventListener("storage", syncAuth);
-      window.removeEventListener("careerFluxAuthChange", syncAuth);
-    };
-  }, [userProp]);
+  // Use live profile photo if available, fallback to user avatar
+  const avatarUrl =
+    profileData?.photo ||
+    user?.avatar ||
+    user?.profilePicture;
 
   // ==========================================
   // CLOSE DROPDOWNS WHEN CLICKING OUTSIDE
@@ -154,19 +210,6 @@ export default function Header({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-  useEffect(() => {
-    if (location.pathname !== "/" || !location.hash) return;
-
-    const sectionId = location.hash.slice(1);
-    const frame = window.requestAnimationFrame(() => {
-      document
-        .getElementById(sectionId)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-
-    return () => window.cancelAnimationFrame(frame);
-  }, [location.pathname, location.hash]);
 
   // ==========================================
   // AUTHENTICATION ACTIONS
@@ -199,27 +242,30 @@ export default function Header({
     navigate(`/signup?type=${type}`);
   };
 
- const handleLogout = () => {
-  setProfileOpen(false);
-  setNotificationsOpen(false);
+  const handleLogout = () => {
+    setProfileOpen(false);
+    setNotificationsOpen(false);
 
-  // Remove user information
-  localStorage.removeItem("careerFluxUser");
-  sessionStorage.removeItem("careerFluxUser");
+    // Remove user information
+    localStorage.removeItem("careerFluxUser");
+    sessionStorage.removeItem("careerFluxUser");
 
-  // Remove authentication tokens
-  localStorage.removeItem("careerFluxToken");
-  sessionStorage.removeItem("careerFluxToken");
+    // Remove authentication tokens
+    localStorage.removeItem("careerFluxToken");
+    sessionStorage.removeItem("careerFluxToken");
+    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
 
-  // Update Header immediately
-  setUser(null);
+    // Update Header immediately & clear profile data
+    setUser(null);
+    setProfileData(null);
 
-  window.dispatchEvent(
-    new Event("careerFluxAuthChange")
-  );
+    window.dispatchEvent(
+      new Event("careerFluxAuthChange")
+    );
 
-  navigate("/");
-};
+    navigate("/");
+  };
 
   // ==========================================
   // NAVIGATION
@@ -239,24 +285,14 @@ export default function Header({
       return;
     }
 
-    // Allow DashboardLayout or parent components
-    // to handle their own navigation.
     if (onNavigate) {
       onNavigate(id);
       return;
     }
 
-    if (id === "home" || id === "jobs" || id === "about") {
-      if (location.pathname !== "/") {
-        navigate(`/#${id}`);
-        return;
-      }
-
-      if (location.hash !== `#${id}`) navigate(`/#${id}`);
-      document
-        .getElementById(id)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    if (id === "home") navigate("/#home");
+    if (id === "jobs") navigate("/#jobs");
+    if (id === "about") navigate("/#about");
   };
 
   // ==========================================
@@ -531,7 +567,7 @@ export default function Header({
                 </span>
               )}
 
-              <span className="hidden text-xs font-bold text-slate-800 sm:inline">
+              <span className="hidden text-xs font-bold text-slate-800 sm:inline max-w-[120px] truncate">
                 {displayName}
               </span>
 

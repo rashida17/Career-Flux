@@ -10,6 +10,10 @@ import SkillProofCard from "../components/SkillProofCard";
 import RecommendedJobs from "../components/RecommendedJobs";
 import JobSeekerProfileForm from "./JobSeekerProfileForm";
 import JobSeekerSkillsForm from "./JobSeekerSkillsForm";
+import CareerRoadmap from "./CareerRoadmap"
+import BrowseJobs from "./BrowseJobs";
+import JobSeekerApplication from "./JobSeekerApplication";
+
 
 import {
   LayoutDashboard,
@@ -395,6 +399,36 @@ export default function JobSeekerDashboard() {
     );
   }
 
+  if (activeTab === "Find Jobs") {
+    return (
+      <BrowseJobs
+        user={data}
+        onNavigate={handleNavigate}
+      />
+    );
+  }
+
+  if (activeTab === "Career Roadmap") {
+    return (
+      <CareerRoadmap
+        user={data}
+        onNavigate={handleNavigate}
+      />
+    );
+
+  }
+
+    
+  if (activeTab === "My Applications") {
+    return (
+      <JobSeekerApplication
+        user={data}
+        onNavigate={handleNavigate}
+      />
+    );
+
+  }
+
   const welcomeTitle = data.isFirstLogin
     ? `Welcome, ${data.name}`
     : `Welcome back, ${data.name}`;
@@ -484,4 +518,5 @@ export default function JobSeekerDashboard() {
 </div>
     </DashboardLayout>
   );
-}
+  }
+

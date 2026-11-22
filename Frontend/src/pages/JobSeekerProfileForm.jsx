@@ -1,11 +1,9 @@
-
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   User,
   Mail,
   Phone,
   MapPin,
-  Briefcase,
   Plus,
   Trash2,
   GraduationCap,
@@ -80,7 +78,12 @@ function PhotoUpload({ photo, setPhoto }) {
       setError("Image must be 2MB or smaller.");
     } else {
       setError("");
-      setPhoto(URL.createObjectURL(file));
+      // Base64 conversion taake photo MongoDB mein save ho sake aur re-login par bhi dikhe
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhoto(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
 
     e.target.value = "";
@@ -93,7 +96,6 @@ function PhotoUpload({ photo, setPhoto }) {
 
   return (
     <div className="flex items-center gap-5">
-      {/* Profile Image Preview */}
       <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-brand-200 bg-brand-50">
         {photo ? (
           <img
@@ -111,7 +113,6 @@ function PhotoUpload({ photo, setPhoto }) {
         )}
       </div>
 
-      {/* Upload and Remove Buttons */}
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -163,7 +164,7 @@ const profileFields = [
     label: "Full Name",
     type: "text",
     icon: User,
-    placeholder: "e.g. Ahmed Khan",
+    placeholder: "e.g. Rashida Iqbal",
     autoComplete: "name",
     minLength: 3,
   },
@@ -183,7 +184,7 @@ const profileFields = [
     placeholder: "03XX-XXXXXXX",
     autoComplete: "tel",
     validate: (v) =>
-      PK_PHONE.test(v.trim())
+      !v || PK_PHONE.test(v.trim())
         ? ""
         : "Enter a valid number, e.g. 0300-1234567.",
   },
@@ -194,15 +195,6 @@ const profileFields = [
     icon: MapPin,
     placeholder: "Enter your city",
     optional: true,
-  },
-  {
-    name: "target_job_title",
-    label: "Target Job Title",
-    type: "text",
-    icon: Briefcase,
-    placeholder: "e.g. Frontend Developer",
-    minLength: 3,
-    full: true,
   },
   {
     name: "bio",
@@ -512,46 +504,45 @@ function EntrySection({
   );
 }
 
-/* ---------- Mock profile data ---------- */
+/* ---------- Helper to get stored user email/name fallback ---------- */
 
-const mockProfile = {
-  full_name: "Ahmed Khan",
-  email: "ahmed@example.com",
-  phone_number: "0300-1234567",
-  location: "Lahore",
-  target_job_title: "Frontend Developer",
-  bio: "Frontend developer who loves building clean, accessible interfaces.",
-
-  education: [
-    {
-      institute: "University of Lahore",
-      degree: "BS Computer Science",
-      startYear: "2022",
-      endYear: "2026",
-      current: false,
-    },
-  ],
-
-  is_fresher: false,
-
-  experience: [
-    {
-      company: "TechSolutions",
-      title: "Frontend Intern",
-      startYear: "2025",
-      endYear: "2025",
-      current: false,
-    },
-  ],
+const getStoredUserFallback = () => {
+  try {
+    const raw =
+      localStorage.getItem("careerFluxUser") ||
+      sessionStorage.getItem("careerFluxUser");
+    if (!raw) return { full_name: "", email: "" };
+    const parsed = JSON.parse(raw);
+    const u = parsed.user || parsed.data?.user || parsed;
+    return {
+      full_name: u?.name || "",
+      email: u?.email || "",
+    };
+  } catch {
+    return { full_name: "", email: "" };
+  }
 };
 
 /* ---------- Job Seeker Profile Page ---------- */
 
-export default function JobSeekerProfileForm({
-  profile = mockProfile,
-  onNavigate,
-}) {
+export default function JobSeekerProfileForm({ onNavigate }) {
   const [toast, setToast] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [fetching, setFetching] = useState(true);
+
+  const fallbackUser = getStoredUserFallback();
+
+  const [profile, setProfile] = useState({
+    full_name: fallbackUser.full_name,
+    email: fallbackUser.email,
+    phone_number: "",
+    location: "",
+    bio: "",
+    education: [emptyEducation()],
+    experience: [],
+    is_fresher: false,
+    photo: "",
+  });
 
   const [entryErrors, setEntryErrors] = useState({
     education: [],
@@ -559,19 +550,107 @@ export default function JobSeekerProfileForm({
     general: "",
   });
 
-  const handleSubmit = async (values) => {
-    const result = validateEntries(values);
+  /* ---------- Fetch live profile from MongoDB on load ---------- */
+  useEffect(() => {
+    const fetchProfileFromDB = async () => {
+      try {
+        const token =
+          localStorage.getItem("careerFluxToken") ||
+          sessionStorage.getItem("careerFluxToken") ||
+          localStorage.getItem("token") ||
+          sessionStorage.getItem("token");
 
+        if (!token) {
+          setFetching(false);
+          return;
+        }
+
+        const response = await fetch("http://localhost:5000/api/jobseeker/profile", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.profile) {
+          setProfile((prev) => ({
+            ...prev,
+            ...data.profile,
+            email: data.profile.email || prev.email,
+            education:
+              data.profile.education && data.profile.education.length > 0
+                ? data.profile.education
+                : [emptyEducation()],
+            experience: data.profile.experience || [],
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch job seeker profile:", err);
+        setEntryErrors((prev) => ({
+          ...prev,
+          general: "Unable to load profile data from server.",
+        }));
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchProfileFromDB();
+  }, []);
+
+  /* ---------- Save profile to MongoDB ---------- */
+  const handleSubmit = async (values) => {
+    setSaving(true);
+    setEntryErrors({ education: [], experience: [], general: "" });
+
+    const result = validateEntries(values);
     setEntryErrors(result);
 
-    if (result.hasError) return;
+    if (result.hasError) {
+      setSaving(false);
+      return;
+    }
 
-    // Backend integration later: PUT /seeker/profile
-    console.log("Saving profile:", values);
+    try {
+      const token =
+        localStorage.getItem("careerFluxToken") ||
+        sessionStorage.getItem("careerFluxToken") ||
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("token");
 
-    setToast("Profile updated successfully.");
+      const response = await fetch("http://localhost:5000/api/jobseeker/profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(values),
+      });
 
-    setTimeout(() => setToast(""), 3000);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to save profile");
+      }
+
+      if (data.profile) {
+        setProfile((prev) => ({ ...prev, ...data.profile }));
+      }
+
+      setToast("Profile successfully saved to local MongoDB!");
+      window.dispatchEvent(new Event("careerFluxProfileUpdate"));
+    } catch (err) {
+      console.error("Profile save error:", err);
+      setEntryErrors((prev) => ({
+        ...prev,
+        general: err.message || "Network error.",
+      }));
+    } finally {
+      setSaving(false);
+      setTimeout(() => setToast(""), 4000);
+    }
   };
 
   return (
@@ -581,145 +660,145 @@ export default function JobSeekerProfileForm({
       onNavigate={onNavigate}
       workspaceLabel="Job Seeker Workspace"
       menuTitle="Job Seeker Menu"
-
-      /* ---------- Authenticated Header Props ---------- */
       user={{
-        name: profile.full_name,
+        name: profile.full_name || "Job Seeker",
         email: profile.email,
       }}
       role="jobseeker"
     >
-      <div className="mx-auto max-w-4xl space-y-5">
+      <div className="w-full max-w-none space-y-5">
         {toast && (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
             {toast}
           </div>
         )}
 
-        <ConfigForm
-          title="My Profile"
-          description="Keep your details up to date so employers and our AI can match you better."
-          submitLabel="Save Changes"
-          submitPlacement="header"
-          fields={profileFields}
-          initialValues={{
-            education: [emptyEducation()],
-            experience: [],
-            is_fresher: false,
-            photo: "",
-            ...profile,
-          }}
-          onSubmit={handleSubmit}
+        {entryErrors.general && (
+          <div className="rounded-2xl border border-brand-300 bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-700">
+            {entryErrors.general}
+          </div>
+        )}
 
-          /* ---------- Profile Photo Section ---------- */
-          before={({ values, setValue }) => (
-            <PhotoUpload
-              photo={values.photo}
-              setPhoto={(p) => setValue("photo", p)}
-            />
-          )}
-
-          /* ---------- Education and Experience ---------- */
-          after={({ values, setValue }) => (
-            <div className="space-y-8">
-              {entryErrors.general && (
-                <p className="rounded-2xl border border-brand-300 bg-white px-4 py-3 text-sm font-semibold text-brand-700">
-                  {entryErrors.general}
-                </p>
-              )}
-
-              <EntrySection
-                title="Education"
-                icon={GraduationCap}
-                addLabel="Add another education"
-                items={values.education || []}
-                errors={entryErrors.education}
-                onChange={(v) => setValue("education", v)}
-                newItem={emptyEducation}
-                config={{
-                  primaryKey: "institute",
-                  primaryLabel: "Institute / University",
-                  primaryPlaceholder: "e.g. University of Lahore",
-                  secondaryKey: "degree",
-                  secondaryLabel: "Degree / Program",
-                  secondaryPlaceholder: "e.g. BS Computer Science",
-                  currentText: "Currently studying",
-                }}
+        {fetching ? (
+          <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center text-sm font-semibold text-stone-500">
+            Loading your profile...
+          </div>
+        ) : (
+          <ConfigForm
+            key={profile._id || "profile-form"}
+            title="My Profile"
+            description="Keep your details up to date so employers and our AI can match you better."
+            submitLabel={saving ? "Saving..." : "Save Changes"}
+            submitPlacement="header"
+            fields={profileFields}
+            initialValues={{
+              education: [emptyEducation()],
+              experience: [],
+              is_fresher: false,
+              photo: "",
+              ...profile,
+            }}
+            onSubmit={handleSubmit}
+            before={({ values, setValue }) => (
+              <PhotoUpload
+                photo={values.photo}
+                setPhoto={(p) => setValue("photo", p)}
               />
-
-              <div>
-                <label className="mb-4 flex cursor-pointer items-center gap-2 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-slate-800">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(values.is_fresher)}
-                    onChange={(e) => {
-                      setValue("is_fresher", e.target.checked);
-
-                      if (e.target.checked) {
-                        setValue("experience", []);
-                      }
-                    }}
-                    className="h-4 w-4 rounded border-stone-300 accent-[#DC4A1F]"
-                  />
-
-                  I am a fresher (no work experience yet)
-                </label>
-
+            )}
+            after={({ values, setValue }) => (
+              <div className="space-y-8">
                 <EntrySection
-                  title="Experience"
-                  icon={Building2}
-                  addLabel="Add another experience"
-                  items={values.experience || []}
-                  errors={entryErrors.experience}
-                  onChange={(v) => setValue("experience", v)}
-                  newItem={emptyExperience}
-                  disabledNote={
-                    values.is_fresher
-                      ? "Marked as fresher. Untick the box above to add work experience."
-                      : ""
-                  }
+                  title="Education"
+                  icon={GraduationCap}
+                  addLabel="Add another education"
+                  items={values.education || []}
+                  errors={entryErrors.education}
+                  onChange={(v) => setValue("education", v)}
+                  newItem={emptyEducation}
                   config={{
-                    primaryKey: "company",
-                    primaryLabel: "Company",
-                    primaryPlaceholder: "e.g. TechSolutions",
-                    secondaryKey: "title",
-                    secondaryLabel: "Job Title",
-                    secondaryPlaceholder: "e.g. Frontend Intern",
-                    currentText: "Currently working here",
+                    primaryKey: "institute",
+                    primaryLabel: "Institute / University",
+                    primaryPlaceholder: "e.g. University of the Punjab",
+                    secondaryKey: "degree",
+                    secondaryLabel: "Degree / Program",
+                    secondaryPlaceholder: "e.g. BS Computer Science",
+                    currentText: "Currently studying",
                   }}
                 />
 
-                {!values.is_fresher &&
-                  (values.experience || []).length === 0 && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setValue("experience", [emptyExperience()])
-                      }
-                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-stone-300 bg-stone-50 px-4 py-3 text-sm font-bold text-brand-600 transition-colors hover:border-brand-300 hover:bg-brand-50"
-                    >
-                      <Plus size={16} />
-                      Add experience
-                    </button>
-                  )}
-              </div>
+                <div>
+                  <label className="mb-4 flex cursor-pointer items-center gap-2 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-slate-800">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(values.is_fresher)}
+                      onChange={(e) => {
+                        setValue("is_fresher", e.target.checked);
 
-              <div className="flex flex-col gap-3 rounded-2xl border border-stone-200 bg-stone-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-stone-600">
-                  Skills and proof (GitHub, certificates) are managed separately.
-                </p>
+                        if (e.target.checked) {
+                          setValue("experience", []);
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-stone-300 accent-[#DC4A1F]"
+                    />
+                    I am a fresher (no work experience yet)
+                  </label>
 
-                <button
-                  type="button"
-                  onClick={() => onNavigate?.("my-skills")}
-                  className="shrink-0 rounded-xl border border-brand-500 px-4 py-2 text-sm font-bold text-brand-600 transition-colors hover:bg-brand-50"
-                >
-                  Manage Skills
-                </button>
+                  <EntrySection
+                    title="Experience"
+                    icon={Building2}
+                    addLabel="Add another experience"
+                    items={values.experience || []}
+                    errors={entryErrors.experience}
+                    onChange={(v) => setValue("experience", v)}
+                    newItem={emptyExperience}
+                    disabledNote={
+                      values.is_fresher
+                        ? "Marked as fresher. Untick the box above to add work experience."
+                        : ""
+                    }
+                    config={{
+                      primaryKey: "company",
+                      primaryLabel: "Company",
+                      primaryPlaceholder: "e.g. TechSolutions",
+                      secondaryKey: "title",
+                      secondaryLabel: "Job Title",
+                      secondaryPlaceholder: "e.g. Frontend Intern",
+                      currentText: "Currently working here",
+                    }}
+                  />
+
+                  {!values.is_fresher &&
+                    (values.experience || []).length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setValue("experience", [emptyExperience()])
+                        }
+                        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-stone-300 bg-stone-50 px-4 py-3 text-sm font-bold text-brand-600 transition-colors hover:border-brand-300 hover:bg-brand-50"
+                      >
+                        <Plus size={16} />
+                        Add experience
+                      </button>
+                    )}
+                </div>
+
+                <div className="flex flex-col gap-3 rounded-2xl border border-stone-200 bg-stone-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-stone-600">
+                    Skills and proof (GitHub, certificates) are managed separately.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => onNavigate?.("My Skills")}
+                    className="shrink-0 rounded-xl border border-brand-500 px-4 py-2 text-sm font-bold text-brand-600 transition-colors hover:bg-brand-50"
+                  >
+                    Manage Skills
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        />
+            )}
+          />
+        )}
       </div>
     </DashboardLayout>
   );

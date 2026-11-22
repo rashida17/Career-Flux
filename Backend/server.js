@@ -10,13 +10,21 @@ import jobRoutes from "./routes/jobRoutes.js";
 import errorHandler from "./middleware/errorHandler.js";
 import CompanyProfileRoutes from "./routes/CompanyProfileRoutes.js";
 import verificationRoutes from "./routes/verificationRoutes.js";
+
+// Added from File 2
+import jobSeekerRoutes from "./routes/jobSeekerRoutes.js";
+import jobSeekerSkillRoutes from "./routes/jobSeekerSkillRoutes.js";
+
 const app = express();
 
 app.use(cors({
   origin: process.env.CLIENT_URL || "http://localhost:5173"
 }));
 
-app.use(express.json());
+
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
@@ -26,6 +34,11 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api", CompanyProfileRoutes);
 app.use("/api", verificationRoutes);
+
+// Job Seeker routes
+app.use("/api/jobseeker", jobSeekerRoutes);
+app.use("/api/jobseeker/skills", jobSeekerSkillRoutes);
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });

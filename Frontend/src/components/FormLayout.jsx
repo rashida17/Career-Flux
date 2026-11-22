@@ -187,10 +187,15 @@ export default function FormLayout({
         name={f.name}
         placeholder={f.placeholder}
         autoComplete={f.autoComplete}
+        disabled={f.disabled}
+        readOnly={f.readOnly}
         max={f.type === "date" ? todayISO() : undefined}
         id={f.name}
         value={values[f.name]}
-        onChange={(e) => setValue(f.name, e.target.value)}
+        onChange={(e) => {
+          if (f.disabled || f.readOnly) return;
+          setValue(f.name, e.target.value);
+        }}
       />
     );
   };
